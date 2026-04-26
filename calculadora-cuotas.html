@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Cuotas Pro</title>
+
+    <!-- core Assets -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/magic-core.css">
+    <script src="js/magic-shared.js"></script>
+    <style>
+        :root {
+            --accent: var(--primary);
+        }
+
+        
+
+        .input-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .result-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            text-align: left;
+            max-height: 250px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        .result-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .result-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
+
+        .cuota-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1rem;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid var(--primary);
+            transition: transform 0.2s;
+        }
+
+        .cuota-item:hover {
+            transform: translateX(5px);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .cuota-num {
+            font-weight: 800;
+            font-size: 1.2rem;
+            color: white;
+        }
+
+        .cuota-num span {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-left: 4px;
+        }
+
+        .cuota-monto {
+            font-weight: 800;
+            font-size: 1.3rem;
+            color: #34d399;
+        }
+
+        .error-msg {
+            color: #fca5a5;
+            font-weight: 600;
+            padding: 1rem;
+            background: rgba(239, 68, 68, 0.1);
+            border-radius: 8px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="view-container sm" style="text-align: center; padding: 3rem;">
+        <a href="index.html" class="nav-link" style="display:inline-block; margin-bottom:1.5rem; color:#94a3b8; text-decoration:none; font-weight:600; font-size:0.9rem;">← Volver al Dashboard</a>
+        <h1 class="gradient-heading">Simulador de Cuotas</h1>
+
+        <div class="input-group">
+            <label for="monto">Ingresar Monto Total ($)</label>
+            <input type="text" id="monto" placeholder="0" oninput="formatearNumero(this); calcularCuotas()">
+        </div>
+
+        <div class="result-container" id="resultado">
+            <!-- Resultados JS -->
+        </div>
+    </div>
+
+    <script>
+        const configuracionCuotas = [
+            { cuotas: 2, interes: 15 },
+            { cuotas: 3, interes: 25 },
+            { cuotas: 4, interes: 40 },
+            { cuotas: 6, interes: 60 },
+            { cuotas: 9, interes: 75 },
+            { cuotas: 12, interes: 100 },
+            { cuotas: 18, interes: 150 },
+            { cuotas: 24, interes: 180 }
+        ];
+
+        function formatearNumero(input) {
+            let valor = input.value.replace(/\./g, '');
+            valor = parseInt(valor, 10);
+
+            if (!isNaN(valor)) {
+                input.value = valor.toLocaleString('es-AR');
+            } else {
+                input.value = '';
+            }
+        }
+
+        function calcularCuotas() {
+            const val = document.getElementById("monto").value;
+            const resultadoDiv = document.getElementById("resultado");
+
+            // Limpia automáticamente si no hay texto o se borra el valor de la caja
+            if (!val) {
+                resultadoDiv.innerHTML = "";
+                return;
+            }
+
+            const monto = parseFloat(val.replace(/\./g, ''));
+
+            if (isNaN(monto) || monto <= 0) {
+                resultadoDiv.innerHTML = "<div class='error-msg'>Por favor, ingrese un monto válido.</div>";
+                return;
+            }
+
+            // O(1) Rendimiento: Determinamos el tope de cuotas UNA SOLA VEZ
+            let maxCuotas = 24;
+            if (monto < 30000) maxCuotas = 2;
+            else if (monto < 80000) maxCuotas = 3;
+            else if (monto < 150000) maxCuotas = 6;
+            else if (monto < 250000) maxCuotas = 9;
+            else if (monto < 350000) maxCuotas = 12;
+            else if (monto < 500000) maxCuotas = 18;
+
+            // Renderizado en bloque (Batch DOM update) para ahorrar re-dibujos de tarjeta gráfica
+            let htmlBuffer = "";
+
+            configuracionCuotas.forEach(opcion => {
+                // Filtro silencioso ultrarrápido
+                if (opcion.cuotas > maxCuotas) return;
+
+                const montoConInteres = monto * (1 + opcion.interes / 100);
+                const montoCuota = Math.round(montoConInteres / opcion.cuotas / 1000) * 1000;
+
+                htmlBuffer += `
+                    <div class="cuota-item">
+                        <div class="cuota-num">${opcion.cuotas}<span>cuotas</span></div>
+                        <div class="cuota-monto">$${montoCuota.toLocaleString("es-AR")}</div>
+                    </div>
+                `;
+            });
+
+            // Inyectamos todo el bloque formateado de un solo golpe al DOM
+            resultadoDiv.innerHTML = htmlBuffer;
+        }
+    </script>
+</body>
+
+</html>

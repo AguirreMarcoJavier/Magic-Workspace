@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proyectos - Magic Workspace</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/magic-core.css">
+    <script src="js/magic-shared.js"></script>
+    <style>
+        .kanban-col { min-height: 380px; display: flex; flex-direction: column; gap: 1rem; }
+        .kanban-list { display: flex; flex-direction: column; gap: 0.8rem; flex-grow: 1; }
+        .kanban-item { 
+            background: var(--bg-dark); padding: 1.2rem; border-radius: 18px; 
+            border: 1px solid var(--border); transition: all 0.2s;
+        }
+        .kanban-item:hover { border-color: var(--primary); transform: translateY(-3px); }
+        .kanban-item h4 { margin: 0 0 0.3rem 0; font-size: 1rem; font-weight: 700; }
+        .kanban-item p { margin: 0 0 0.8rem 0; font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; }
+        .item-actions { display: flex; gap: 0.5rem; padding-top: 0.8rem; border-top: 1px solid var(--border); flex-wrap: wrap; }
+        .btn-action { 
+            background: var(--card); border: 1px solid var(--border); color: var(--text-muted);
+            padding: 0.3rem 0.7rem; border-radius: 8px; font-size: 0.7rem; cursor: pointer; font-weight: 800;
+            transition: all 0.2s;
+        }
+        .btn-action:hover { color: var(--text); border-color: var(--text); }
+        .btn-action.delete:hover { border-color: var(--danger); color: var(--danger); }
+
+        .add-project-form {
+            display: none; flex-direction: column; gap: 0.8rem;
+            background: var(--bg-dark); border: 1px solid var(--border);
+            border-radius: 16px; padding: 1.2rem; margin-top: 0.5rem;
+        }
+        .add-project-form.visible { display: flex; }
+        .form-actions { display: flex; gap: 0.6rem; }
+
+        .col-badge { 
+            font-size: 0.65rem; font-weight: 800; text-transform: uppercase; 
+            color: var(--primary); letter-spacing: 1px; 
+        }
+        .edit-step-input { 
+            font-size: 0.8rem; padding: 0.4rem 0.8rem; border-radius: 8px; width: 100%; box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <h1 class="gradient-heading">💡 Proyectos Pro</h1>
+            <p>Estrategia y ejecución sin dispersión.</p>
+        </header>
+
+        <div class="magic-grid">
+            <div class="magic-card kanban-col" id="col-ideas">
+                <div>
+                    <h3>Ideas Proyecto</h3>
+                    <span class="col-badge">Backlog</span>
+                </div>
+                <div id="projectIdeaList" class="kanban-list"></div>
+
+                <button class="magic-btn" onclick="toggleAddForm()" id="btnNewProject">+ Nuevo Proyecto</button>
+                <div class="add-project-form" id="addProjectForm">
+                    <div class="input-group">
+                        <label>Nombre del proyecto</label>
+                        <input type="text" id="projectName" placeholder="ej. App de ventas"
+                               onkeydown="if(event.key==='Enter') confirmAddProject()">
+                    </div>
+                    <div class="input-group">
+                        <label>Primer paso concreto</label>
+                        <input type="text" id="projectStep" placeholder="ej. Definir MVP"
+                               onkeydown="if(event.key==='Enter') confirmAddProject()">
+                    </div>
+                    <div class="form-actions">
+                        <button class="magic-btn" onclick="confirmAddProject()" style="flex:1">Agregar</button>
+                        <button class="magic-btn secondary" onclick="toggleAddForm()">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="magic-card kanban-col" id="col-wait">
+                <div>
+                    <h3>⏳ En Espera</h3>
+                    <span class="col-badge">Bloqueado / Pendiente</span>
+                </div>
+                <div id="projectWaitList" class="kanban-list"></div>
+            </div>
+
+            <div class="magic-card kanban-col" id="col-exec">
+                <div>
+                    <h3>⚡ En Ejecución</h3>
+                    <span class="col-badge" id="execCount">0 / 3</span>
+                </div>
+                <div id="projectExecList" class="kanban-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let projects = MagicShared.load('strategic_projects', []);
+
+        function save() {
+            MagicShared.save('strategic_projects', projects);
+            render();
+        }
+
+        function toggleAddForm() {
+            const form = document.getElementById('addProjectForm');
+            form.classList.toggle('visible');
+            if (form.classList.contains('visible')) {
+                document.getElementById('projectName').value = '';
+                document.getElementById('projectStep').value = '';
+                document.getElementById('projectName').focus();
+            }
+        }
+
+        function confirmAddProject() {
+            const name = document.getElementById('projectName').value.trim();
+            const step = document.getElementById('projectStep').value.trim() || 'Definir primer paso';
+            if (!name) return;
+            projects.push({ id: Date.now(), name, status: 'Ideas', nextStep: step });
+            toggleAddForm();
+            save();
+        }
+
+        function moveProject(id, status) {
+            const p = projects.find(x => x.id === id);
+            if (!p) return;
+            const execCount = projects.filter(x => x.status === 'Exec').length;
+            if (status === 'Exec' && execCount >= 3 && p.status !== 'Exec') {
+                alert('¡Límite alcanzado! Máximo 3 proyectos en ejecución.');
+                return;
+            }
+            p.status = status;
+            save();
+        }
+
+        function editNextStep(id) {
+            const p = projects.find(x => x.id === id);
+            if (!p) return;
+            const el = document.getElementById('step-' + id);
+            if (!el) return;
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'edit-step-input';
+            input.value = p.nextStep;
+            input.onblur = () => { p.nextStep = input.value.trim() || p.nextStep; save(); };
+            input.onkeydown = (e) => { if (e.key === 'Enter') input.blur(); };
+            el.replaceWith(input);
+            input.focus();
+        }
+
+        function deleteProject(id) {
+            if (!confirm('¿Eliminar este proyecto?')) return;
+            projects = projects.filter(x => x.id !== id);
+            save();
+        }
+
+        function render() {
+            const exec = document.getElementById('projectExecList');
+            const wait = document.getElementById('projectWaitList');
+            const idea = document.getElementById('projectIdeaList');
+            [exec, wait, idea].forEach(l => l.innerHTML = '');
+
+            const execCount = projects.filter(x => x.status === 'Exec').length;
+            document.getElementById('execCount').textContent = `${execCount} / 3`;
+
+            projects.forEach(p => {
+                const div = document.createElement('div');
+                div.className = 'kanban-item';
+                div.innerHTML = `
+                    <h4>${p.name}</h4>
+                    <p id="step-${p.id}" style="cursor:pointer" onclick="editNextStep(${p.id})" title="Clic para editar">📌 ${p.nextStep}</p>
+                    <div class="item-actions">
+                        ${p.status !== 'Ideas' ? `<button class="btn-action" onclick="moveProject(${p.id}, 'Ideas')">💡 Idea</button>` : ''}
+                        ${p.status !== 'Wait'  ? `<button class="btn-action" onclick="moveProject(${p.id}, 'Wait')">⏳ Espera</button>` : ''}
+                        ${p.status !== 'Exec'  ? `<button class="btn-action" onclick="moveProject(${p.id}, 'Exec')">⚡ Ejecutar</button>` : ''}
+                        <button class="btn-action delete" style="margin-left:auto" onclick="deleteProject(${p.id})">× Eliminar</button>
+                    </div>
+                `;
+                const target = p.status === 'Exec' ? exec : (p.status === 'Wait' ? wait : idea);
+                target.appendChild(div);
+            });
+        }
+        render();
+    </script>
+</body>
+</html>

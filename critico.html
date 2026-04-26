@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enfoque Crítico - Magic Workspace</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/magic-core.css">
+    <script src="js/magic-shared.js"></script>
+    <style>
+        .task-list { display: flex; flex-direction: column; gap: 0.8rem; }
+        .task-item { 
+            display: flex; align-items: center; gap: 1rem; padding: 1rem; background: var(--bg-dark); 
+            border: 1px solid var(--border); border-radius: 16px; transition: all 0.2s; cursor: pointer;
+        }
+        .task-item:hover { border-color: var(--primary); transform: translateX(5px); }
+        .task-item.completed { opacity: 0.5; }
+        .task-item.completed .task-text { text-decoration: line-through; }
+        .main-goal-card { border: 2px solid var(--primary); background: var(--primary-muted); }
+        .main-goal-card h3 { color: var(--primary); }
+        .main-goal-card .task-text { font-size: 1.3rem; font-weight: 800; color: var(--text); }
+        .task-checkbox { 
+            width: 22px; height: 22px; border-radius: 7px; border: 2px solid var(--primary); 
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        .task-checkbox.checked { background: var(--primary); }
+        .task-checkbox.checked::after { content: '✓'; color: white; font-weight: 900; font-size: 14px; }
+        .task-text { flex-grow: 1; font-size: 0.95rem; font-weight: 600; line-height: 1.4; }
+        .task-delete { color: var(--text-muted); cursor: pointer; font-size: 1.2rem; opacity: 0.5; padding: 0.2rem 0.5rem; }
+        .task-delete:hover { color: var(--danger); opacity: 1; }
+        .nogo-list .task-text { color: #fca5a5; }
+        .inline-add { display: flex; gap: 0.6rem; margin-top: 0.5rem; }
+        .inline-add input { flex: 1; }
+        .inline-add button { white-space: nowrap; padding: 0.8rem 1.2rem; }
+        .critical-input-wrap { display: flex; flex-direction: column; gap: 0.8rem; }
+        .critical-input-wrap input { font-size: 1rem; font-weight: 700; border-color: var(--primary); }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <h1 class="gradient-heading">🎯 Foco Crítico</h1>
+            <p>Define el objetivo que moverá la aguja hoy.</p>
+        </header>
+
+        <div class="magic-grid">
+            <!-- 1. OBJETIVO PRINCIPAL -->
+            <div class="magic-card main-goal-card">
+                <h3>Tarea Crítica</h3>
+                <div id="criticalContainer" class="task-list"></div>
+            </div>
+
+            <!-- 2. TAREAS SECUNDARIAS -->
+            <div class="magic-card">
+                <h3>⚖️ Secundarias</h3>
+                <div id="secondaryContainer" class="task-list"></div>
+                <div class="inline-add">
+                    <input type="text" id="inputSecondary" placeholder="+ Agregar secundaria..." 
+                           onkeydown="if(event.key==='Enter') addTask('SECONDARY')">
+                    <button class="magic-btn secondary" onclick="addTask('SECONDARY')">+</button>
+                </div>
+            </div>
+
+            <!-- 3. LISTA NO-GO -->
+            <div class="magic-card">
+                <h3>🚫 NO HACER</h3>
+                <div id="nogoContainer" class="task-list nogo-list"></div>
+                <div class="inline-add">
+                    <input type="text" id="inputNoGo" placeholder="+ Evitar hoy..."
+                           onkeydown="if(event.key==='Enter') addTask('NOGO')">
+                    <button class="magic-btn secondary" onclick="addTask('NOGO')">+</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let tasks = MagicShared.load('strategic_tasks', []);
+
+        function save() {
+            MagicShared.save('strategic_tasks', tasks);
+            render();
+        }
+
+        function addTask(type) {
+            if (type === 'CRITICAL') {
+                // Mostrar campo inline
+                const container = document.getElementById('criticalContainer');
+                container.innerHTML = `
+                    <div class="critical-input-wrap">
+                        <input type="text" id="criticalInput" placeholder="¿Cuál es tu tarea crítica de hoy?" autofocus
+                               onkeydown="if(event.key==='Enter') saveCritical()">
+                        <div style="display:flex; gap:0.6rem">
+                            <button class="magic-btn" onclick="saveCritical()" style="flex:1">Establecer Foco</button>
+                            <button class="magic-btn secondary" onclick="render()">Cancelar</button>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('criticalInput').focus();
+                return;
+            }
+
+            const inputId = type === 'SECONDARY' ? 'inputSecondary' : 'inputNoGo';
+            const input = document.getElementById(inputId);
+            const text = input.value.trim();
+            if (!text) return;
+            input.value = '';
+            tasks.push({ id: Date.now(), type, text, completed: false });
+            save();
+        }
+
+        function saveCritical() {
+            const input = document.getElementById('criticalInput');
+            const text = input ? input.value.trim() : '';
+            if (!text) return;
+            tasks = tasks.filter(t => t.type !== 'CRITICAL');
+            tasks.push({ id: Date.now(), type: 'CRITICAL', text, completed: false });
+            save();
+        }
+
+        function toggleTask(id) {
+            const t = tasks.find(x => x.id === id);
+            if (t) { t.completed = !t.completed; save(); }
+        }
+
+        function deleteTask(id) {
+            tasks = tasks.filter(x => x.id !== id);
+            save();
+        }
+
+        function render() {
+            const crit   = document.getElementById('criticalContainer');
+            const second = document.getElementById('secondaryContainer');
+            const nogo   = document.getElementById('nogoContainer');
+            crit.innerHTML = ''; second.innerHTML = ''; nogo.innerHTML = '';
+
+            const critical = tasks.find(t => t.type === 'CRITICAL');
+            if (critical) {
+                const div = document.createElement('div');
+                div.className = `task-item ${critical.completed ? 'completed' : ''}`;
+                div.innerHTML = `
+                    <div class="task-checkbox ${critical.completed ? 'checked' : ''}" onclick="toggleTask(${critical.id})"></div>
+                    <span class="task-text" onclick="toggleTask(${critical.id})">${critical.text}</span>
+                    <span class="task-delete" onclick="deleteTask(${critical.id})">×</span>
+                `;
+                crit.appendChild(div);
+            } else {
+                crit.innerHTML = `<button class="magic-btn" onclick="addTask('CRITICAL')" style="width:100%">+ Definir Foco Crítico</button>`;
+            }
+
+            tasks.forEach(t => {
+                if (t.type === 'CRITICAL') return;
+                const div = document.createElement('div');
+                div.className = `task-item ${t.completed ? 'completed' : ''}`;
+                div.innerHTML = `
+                    <div class="task-checkbox ${t.completed ? 'checked' : ''}" onclick="toggleTask(${t.id})"></div>
+                    <span class="task-text" onclick="toggleTask(${t.id})">${t.text}</span>
+                    <span class="task-delete" onclick="deleteTask(${t.id})">×</span>
+                `;
+                if (t.type === 'SECONDARY') second.appendChild(div);
+                else nogo.appendChild(div);
+            });
+        }
+        render();
+    </script>
+</body>
+</html>

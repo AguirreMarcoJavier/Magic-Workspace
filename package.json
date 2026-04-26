@@ -1,0 +1,12 @@
+{
+  "name": "magic-workspace",
+  "version": "1.0.0",
+  "description": "Magic Workspace Local Hosting",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx -y serve . -p 3000"
+  },
+  "keywords": [],
+  "author": "Marco",
+  "license": "ISC"
+}

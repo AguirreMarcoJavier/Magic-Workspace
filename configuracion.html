@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuración del Ecosistema</title>
+    
+    <!-- core Assets -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/magic-core.css">
+    <script src="js/magic-shared.js"></script>
+    <style>
+        :root {
+            --accent-color: var(--primary);
+        }
+
+        body {
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        .section { margin-bottom: 3rem; }
+        .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+        .section-header h2 { font-size: 1.2rem; margin: 0; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; }
+
+        .config-card { background: rgba(0,0,0,0.2); body.light-mode & { background: #f1f5f9; } padding: 1.5rem; border-radius: 16px; border: 1px solid var(--border); margin-bottom: 1rem; }
+        .config-row { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+        .config-info h4 { margin: 0; font-size: 1rem; color: var(--text); }
+        .config-info p { margin: 5px 0 0 0; font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; }
+
+        .btn { padding: 0.8rem 1.5rem; border-radius: 12px; font-weight: 700; cursor: pointer; border: none; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+        .btn-primary { background: var(--primary); color: white; box-shadow: 0 5px 15px rgba(168, 85, 247, 0.4); }
+        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(168, 85, 247, 0.6); }
+        .btn-outline { background: transparent; border: 2px solid var(--primary); color: var(--primary); }
+        .btn-outline:hover { background: var(--primary); color: white; }
+
+        .status-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; }
+        .status-success { background: rgba(16, 185, 129, 0.1); color: var(--success); border: 1px solid var(--success); }
+        
+        .footer-note { font-size: 0.8rem; color: var(--text-muted); text-align: center; margin-top: 2rem; font-style: italic; }
+    </style>
+</head>
+<body>
+
+    <div class="view-container md">
+        <h1 class="gradient-heading">Configuración del Sistema</h1>
+        <p style="color: var(--text-muted); margin-bottom: 2.5rem;">Gestiona la seguridad de tus datos y las preferencias globales de tu Magic Workspace.</p>
+
+        <!-- SECURITY & DATA -->
+        <div class="section">
+            <div class="section-header">
+                <span style="font-size: 1.2rem;">💾</span>
+                <h2>Seguridad & Respaldo</h2>
+            </div>
+
+            <div class="config-card">
+                <div class="config-row">
+                    <div class="config-info">
+                        <h4>Exportar Todo el Ecosistema</h4>
+                        <p>Descarga un archivo .JSON con tus tareas, gastos, notas y configuraciones. Es la forma más segura de no perder nada.</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="exportData()">
+                        <span>📥</span> Descargar Backup
+                    </button>
+                </div>
+            </div>
+
+            <div class="config-card">
+                <div class="config-row">
+                    <div class="config-info">
+                        <h4>Cargar Copia de Seguridad</h4>
+                        <p>¿Cambiaste de equipo? Sube tu archivo previo para restaurar todo instantáneamente.</p>
+                    </div>
+                    <button class="btn btn-outline" onclick="document.getElementById('importFile').click()">
+                        <span>📂</span> Seleccionar Archivo
+                    </button>
+                    <input type="file" id="importFile" style="display:none;" accept=".json" onchange="importData(this)">
+                </div>
+            </div>
+        </div>
+
+        <!-- AUTO GUARD -->
+        <div class="section">
+            <div class="section-header">
+                <span style="font-size: 1.2rem;">🕒</span>
+                <h2>Guardián del Sistema</h2>
+            </div>
+
+            <div class="config-card">
+                <div class="config-row">
+                    <div class="config-info">
+                        <h4>Último Snapshot Automático</h4>
+                        <p>El sistema guarda una copia en caché cada 24 horas.</p>
+                        <div style="margin-top: 10px;">
+                            <span class="status-badge status-success" id="autoStatus">Sincronizado</span>
+                            <span style="font-size: 0.8rem; margin-left: 10px;" id="lastAutoTime">Cargando...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="config-card">
+                <div class="config-row">
+                    <div class="config-info">
+                        <h4>Frecuencia de Recordatorios</h4>
+                        <p>El sistema te avisará de hacer un backup manual cada 7 días.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <p class="footer-note">Diseñado para proteger tu productividad. Versión de Motor 5.1.0-AR</p>
+    </div>
+
+    <script>
+        function exportData() {
+            let backup = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith('magic_')) {
+                    backup[key] = localStorage.getItem(key);
+                }
+            }
+            const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const date = new Date().toISOString().split('T')[0];
+            a.download = `magic_workspace_backup_${date}.json`;
+            a.click();
+            
+            // Registrar backup manual para el recordatorio
+            localStorage.setItem('magic_last_manual_export', Date.now());
+        }
+
+        function importData(input) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (confirm("⚠️ CUIDADO: Se borrarán todos los datos actuales para cargar esta copia. ¿Continuar?")) {
+                        Object.keys(data).forEach(key => {
+                            if (key.startsWith('magic_')) localStorage.setItem(key, data[key]);
+                        });
+                        alert("¡Respaldo cargado con éxito! Recargando Dashboard...");
+                        window.top.location.reload();
+                    }
+                } catch (err) {
+                    alert("Error: El archivo no es un JSON válido.");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const lastAuto = localStorage.getItem('magic_last_auto_snapshot');
+            const timeEl = document.getElementById('lastAutoTime');
+            if(lastAuto) {
+                const date = new Date(parseInt(lastAuto));
+                timeEl.innerText = "Última copia interna: " + date.toLocaleString();
+            } else {
+                timeEl.innerText = "Sin copias previas registradas.";
+            }
+        });
+    </script>
+</body>
+</html>

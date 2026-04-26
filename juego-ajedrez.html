@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ajedrez vs IA</title>
+    
+    <!-- Dependencies for Chess -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    
+    <!-- Core UI -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/magic-core.css">
+    <script src="js/magic-shared.js"></script>
+    
+    <style>
+        .board-wrapper { width: 100%; max-width: 500px; margin: 2rem auto; border-radius: 8px; overflow: hidden; border: 4px solid var(--border); box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+        .status { text-align: center; font-size: 1.2rem; font-weight: 700; margin-bottom: 1rem; color: var(--text); min-height: 28px; }
+        .controls { text-align: center; margin-top: 1rem; }
+        
+        /* Ajuste estético de casillas del CDN para adaptarse al theme oscuro */
+        .white-1e1d7 { background-color: #e2e8f0 !important; }
+        .black-3c85d { background-color: #64748b !important; color: white !important; }
+    </style>
+</head>
+<body>
+    <div class="view-container sm">
+        <a href="juegos.html" class="nav-link">← Volver al Arcade</a>
+        <h1 style="text-align:center; font-size: 2.2rem; background: linear-gradient(to right, #e2e8f0, #94a3b8); background-clip: text; -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-top:1rem;">Ajedrez Táctico</h1>
+        <p style="text-align:center; color:var(--text-muted); font-size:0.9rem;">Tú juegas con <strong style="color:#e2e8f0;">Blancas</strong>. Gemini lidera las <strong style="color:#64748b; font-weight: 800;">Negras</strong>.</p>
+        
+        <div class="status" id="statusMsg">Tu turno. Mueve tus blancas.</div>
+        
+        <div class="board-wrapper">
+            <div id="myBoard"></div>
+        </div>
+        
+        <div class="controls">
+            <button class="magic-btn secondary" onclick="resetGame()">Reiniciar Partida</button>
+        </div>
+    </div>
+
+    <script>
+        let board = null;
+        let game = new Chess();
+        const statusEl = document.getElementById('statusMsg');
+        let gameActive = true;
+
+        function onDragStart (source, piece, position, orientation) {
+            if (game.game_over() || !gameActive) return false;
+            // Solo permitir mover piezas blancas al usuario
+            if (piece.search(/^b/) !== -1) return false;
+        }
+
+        async function onDrop (source, target) {
+            // El usuario intenta mover
+            const move = game.move({
+                from: source,
+                to: target,
+                promotion: 'q' // Siempre promociona a reina (simplificación)
+            });
+
+            if (move === null) return 'snapback'; // Movimiento ilegal
+
+            updateStatus();
+
+            if (!game.game_over()) {
+                statusEl.innerText = "Gemini está analizando la táctica... 🧠";
+                gameActive = false; // Bloquear tablero mientras procesa petición red
+                await makeAIMove();
+            }
+        }
+
+        function onSnapEnd () {
+            board.position(game.fen());
+        }
+
+        function updateStatus () {
+            let status = '';
+            let moveColor = game.turn() === 'b' ? 'Negras (Gemini)' : 'Blancas (Tú)';
+
+            if (game.in_checkmate()) {
+                status = `¡Jaque Mate! ${game.turn() === 'w' ? '💀 Gemini demostró superioridad.' : '🎉 ¡Has vencido a la IA!'} `;
+            } else if (game.in_draw()) {
+                status = '🤝 Partida terminada en Empate Técnico.';
+            } else {
+                status = `Turno de: ${moveColor}`;
+                if (game.in_check()) status += ' -> ¡Jaque! ⚠️';
+            }
+            statusEl.innerText = status;
+        }
+
+        async function makeAIMove() {
+            try {
+                // Generar lista de movimientos legales (algebraicos puros) para inyectarlo como constrain al LLM.
+                const legalMovesArray = game.moves({ verbose: true }).map(m => m.from + m.to + (m.promotion ? m.promotion : ''));
+                const legalMovesCsv = legalMovesArray.join(', ');
+                const fen = game.fen();
+
+                const prompt = `Eres el jugador de Ajedrez que conduce las piezas Negras y te enfrentas a un humano implacable.
+Este es el estado matemático preciso del tablero en Notación FEN: ${fen}
+Estos son TODOS los movimientos absolutamente legales que la física de la partida te permite realizar durante este turno: [${legalMovesCsv}]
+
+Estrategia: Analiza las presiones en el tablero FEN, captura piezas si es beneficioso o desarrolla un ataque profundo. Elige UNA opción táctica superior.
+REGLA INFLEXIBLE QUE DETERMINA TU ÉXITO: Tu respuesta debe contener ÚNICA Y EXCLUSIVAMENTE el movimiento exacto que decides ejecutar, escrito en los mismos 4 caracteres del formato brindado (por ejemplo, e7e5). No agregues puntos finales, exclamaciones ni ningún diálogo. Responde SOLO con la clave de tu jugada.`;
+
+                const aiResponse = await window.MagicAI.askGemini(prompt, []);
+                
+                // Parseo estricto
+                let chosenMove = aiResponse.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+
+                // Fallback Engine si Gemini Alucina una jugada imposible y omite el prompt constraint:
+                if(!legalMovesArray.includes(chosenMove)) {
+                    console.warn(`[Ajedrez Engine] Inteligencia Artificial alucinó la jugada inválida '${chosenMove}'. Interceptando con Auto-Rescate Rándom.`);
+                    chosenMove = legalMovesArray[Math.floor(Math.random() * legalMovesArray.length)];
+                }
+
+                // Generar objeto de movimiento táctico interno
+                game.move({
+                    from: chosenMove.substring(0, 2),
+                    to: chosenMove.substring(2, 4),
+                    promotion: chosenMove.length === 5 ? chosenMove.substring(4, 5) : undefined
+                });
+
+                board.position(game.fen());
+                updateStatus();
+
+            } catch(e) {
+                console.error("AI Chess Connectivity Error:", e);
+                // Si el internet cae o la API muere, forzamos movida aleatoria para no congelar la partida:
+                const possibleMoves = game.moves();
+                if(possibleMoves.length > 0) {
+                    const randomIdx = Math.floor(Math.random() * possibleMoves.length);
+                    game.move(possibleMoves[randomIdx]);
+                    board.position(game.fen());
+                    updateStatus();
+                }
+            } finally {
+                gameActive = true;
+                if(!game.game_over() && game.turn() === 'w') {
+                    statusEl.innerText = "Tu turno. Mueve tus blancas.";
+                }
+            }
+        }
+
+        function resetGame() {
+            game.reset();
+            board.start();
+            gameActive = true;
+            updateStatus();
+            statusEl.innerText = "Tu turno. Mueve tus blancas.";
+        }
+
+        const config = {
+            draggable: true,
+            position: 'start',
+            onDragStart: onDragStart,
+            onDrop: onDrop,
+            onSnapEnd: onSnapEnd,
+            pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
+        };
+
+        // Renderizado del tablero virtual
+        board = Chessboard('myBoard', config);
+        updateStatus();
+    </script>
+</body>
+</html>

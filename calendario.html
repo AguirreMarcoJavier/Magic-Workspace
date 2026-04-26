@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <!-- core Assets -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/magic-core.css">
+    <script src="js/magic-shared.js"></script>
+    <style>
+        :root {
+            --accent-color: var(--primary);
+        }
+
+        body {
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .calendar-container {
+            background: var(--card); border: 1px solid var(--border); border-radius: 28px;
+            padding: 1.5rem; flex-grow: 1; display: flex; flex-direction: column; overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .calendar-header { display: flex; justify-content: space-between; align-items: center; }
+        .month-year { font-size: 1.8rem; font-weight: 800; cursor: pointer; transition: color 0.3s; }
+        .month-year:hover { color: var(--primary); }
+
+        .nav-controls { display: flex; gap: 0.5rem; }
+        .nav-btn {
+            background: #1a1a1a; border: 1px solid var(--border); color: white;
+            width: 40px; height: 40px; border-radius: 12px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; font-size: 1.2rem; transition: all 0.2s;
+        }
+        .nav-btn:hover { background: var(--primary); border-color: var(--primary); }
+
+        .calendar-grid {
+            display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem;
+            flex-grow: 1; min-height: 0;
+        }
+
+        .day-name {
+            text-align: center; font-size: 0.7rem; font-weight: 800; text-transform: uppercase;
+            letter-spacing: 1px; color: var(--text-muted); padding-bottom: 0.5rem;
+        }
+
+        .day-cell {
+            background: #161616; border: 1px solid var(--border);
+            border-radius: 12px; position: relative; padding: 0.5rem; cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column;
+            min-height: 0; overflow: hidden;
+        }
+        .day-cell:hover { background: #1a1a1a; border-color: rgba(168, 85, 247, 0.3); transform: scale(1.05); z-index: 2; }
+        .day-cell.today { border: 2px solid var(--primary); background: var(--primary-muted); }
+        .day-cell.other-month { opacity: 0.25; pointer-events: none; }
+        
+        /* Feriados y Fechas Comerciales */
+        .day-cell.holiday { border: 1.5px solid #fbbf24; background: rgba(251, 191, 36, 0.05); }
+        .day-cell.commercial { border: 1.5px solid #fbbf24; border-style: dashed; background: rgba(251, 191, 36, 0.05); }
+        .holiday-label { font-size: 0.65rem; color: #fbbf24; font-weight: 800; text-transform: uppercase; margin-top: auto; }
+
+        .day-number { font-size: 1.1rem; font-weight: 700; }
+        
+        .event-dots { display: flex; gap: 3px; margin-top: 5px; flex-wrap: wrap; }
+        .dot { width: 6px; height: 6px; background: var(--primary); border-radius: 50%; box-shadow: 0 0 10px var(--primary); }
+
+        /* Modal / Sidebar for Day Info */
+        .day-details {
+            position: fixed; top: 0; right: -400px; width: 400px; height: 100vh;
+            background: #0d0d0d; border-left: 1px solid var(--border); z-index: 1000;
+            padding: 3rem 2rem; box-sizing: border-box; transition: right 0.4s ease;
+            display: flex; flex-direction: column; gap: 2rem;
+        }
+        .day-details.open { right: 0; box-shadow: -20px 0 50px rgba(0,0,0,0.5); }
+        .close-details { cursor: pointer; font-size: 1.5rem; color: var(--text-muted); }
+
+        .event-list { display: flex; flex-direction: column; gap: 1rem; overflow-y: auto; flex-grow: 1; }
+        .event-item {
+            background: #161616; padding: 1.2rem; border-radius: 18px; border: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .event-info h4 { margin: 0; font-size: 1rem; }
+        .event-info span { font-size: 0.8rem; color: var(--text-muted); }
+        
+        .add-event-form { display: flex; flex-direction: column; gap: 1rem; margin-top: auto; }
+        .add-event-form input {
+            background: #161616; border: 1px solid var(--border); border-radius: 12px;
+            padding: 1rem; color: white; width: 100%; box-sizing: border-box; outline: none;
+        }
+        .add-event-form button {
+            background: var(--primary); border: none; padding: 1rem; border-radius: 12px;
+            color: white; font-weight: 700; cursor: pointer; transition: opacity 0.3s;
+        }
+    </style>
+</head>
+<body>
+
+    <div style="display: flex; gap: 2rem; width: 100%; max-width: 1200px; height: 90vh;">
+        
+        <!-- Left Sidebar: Market Opportunities -->
+        <div class="calendar-container" style="flex: 0 0 320px; padding: 2rem; overflow-y: auto;">
+            <h3 style="margin: 0 0 1.5rem 0; font-size: 1.1rem; color: #fbbf24; display: flex; align-items: center; gap: 0.5rem;">
+                🔥 Oportunidades AR
+            </h3>
+            <div id="marketList" style="display: flex; flex-direction: column; gap: 1rem;">
+                <!-- Auto-populated -->
+            </div>
+        </div>
+
+        <div class="calendar-container" style="flex: 1;">
+            <div class="calendar-header">
+                <div class="month-year" id="currentMonthYear">Junio 2026</div>
+            <div class="nav-controls">
+                <button class="nav-btn" onclick="prevMonth()">‹</button>
+                <button class="nav-btn" onclick="nextMonth()">›</button>
+            </div>
+        </div>
+
+            <div class="calendar-grid" id="calendarGrid">
+                <!-- Headers -->
+                <div class="day-name">Lun</div>
+                <div class="day-name">Mar</div>
+                <div class="day-name">Mie</div>
+                <div class="day-name">Jue</div>
+                <div class="day-name">Vie</div>
+                <div class="day-name">Sab</div>
+                <div class="day-name">Dom</div>
+                <!-- Cells generated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Sidebar for Day Details -->
+    <div class="day-details" id="daySidebar">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2 id="sidebarDate">Martes 16</h2>
+            <span class="close-details" onclick="closeSidebar()">×</span>
+        </div>
+
+        <div class="event-list" id="sidebarEvents">
+            <!-- Events for clicked day -->
+        </div>
+
+        <div class="add-event-form">
+            <input type="text" id="newEventTitle" placeholder="+ Añadir evento o tarea...">
+            <input type="time" id="newEventTime">
+            <button onclick="addEvent()">Guardar en Calendario</button>
+        </div>
+    </div>
+
+    <script>
+        let currentDate = new Date();
+        let selectedDate = null;
+        let events = [];
+
+        // BASE DE DATOS ARGENTINA 2026
+        const HOLIDAYS_AR = {
+            "2026-01-01": { name: "Año Nuevo", type: "holiday" },
+            "2026-03-24": { name: "Memoria", type: "holiday" },
+            "2026-04-02": { name: "Malvinas", type: "holiday" },
+            "2026-04-03": { name: "Viernes Santo", type: "holiday" },
+            "2026-05-01": { name: "Trabajador", type: "holiday" },
+            "2026-05-25": { name: "May 25", type: "holiday" },
+            "2026-06-15": { name: "Güemes", type: "holiday" },
+            "2026-06-20": { name: "Belgrano", type: "holiday" },
+            "2026-06-21": { name: "Día del Padre", type: "commercial", campaignWeeks: 4 },
+            "2026-07-09": { name: "Independencia", type: "holiday" },
+            "2026-08-16": { name: "Día de la Niñez", type: "commercial", campaignWeeks: 4 },
+            "2026-08-17": { name: "San Martín", type: "holiday" },
+            "2026-10-12": { name: "Soberanía", type: "holiday" },
+            "2026-10-18": { name: "Día de la Madre", type: "commercial", campaignWeeks: 4 },
+            "2026-10-31": { name: "Halloween", type: "commercial", campaignWeeks: 3 },
+            "2026-11-02": { name: "Cyber Monday", type: "commercial", campaignWeeks: 3 },
+            "2026-11-27": { name: "Black Friday", type: "commercial", campaignWeeks: 2 },
+            "2026-12-08": { name: "Inmaculada", type: "holiday" },
+            "2026-12-25": { name: "Navidad", type: "holiday", campaignWeeks: 5 }
+        };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadEvents();
+            renderCalendar();
+            renderMarketOpportunities();
+        });
+
+        function renderMarketOpportunities() {
+            const list = document.getElementById('marketList');
+            const today = new Date();
+            list.innerHTML = '';
+
+            Object.keys(HOLIDAYS_AR).forEach(dateStr => {
+                const hDate = new Date(dateStr + 'T12:00:00');
+                if(hDate >= today) {
+                    const diffDays = Math.ceil((hDate - today) / (1000 * 60 * 60 * 24));
+                    const h = HOLIDAYS_AR[dateStr];
+                    
+                    const item = document.createElement('div');
+                    item.style.cssText = "background: #161616; padding: 1rem; border-radius: 12px; border: 1px solid #333;";
+                    
+                    let strategy = "";
+                    if(h.campaignWeeks) {
+                        const launchDay = new Date(hDate.getTime() - (h.campaignWeeks * 7 * 24 * 60 * 60 * 1000));
+                        if(today >= launchDay) {
+                            strategy = `<div style="color:#fbbf24; font-size:0.7rem; font-weight:800; margin-top:5px;">🔥 LANZAR CAMPAÑA YA</div>`;
+                        } else {
+                            const launchIn = Math.ceil((launchDay - today) / (1000 * 60 * 60 * 24));
+                            strategy = `<div style="color:#64748b; font-size:0.7rem;">Campaña en ${launchIn} días</div>`;
+                        }
+                    }
+
+                    item.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-weight:700; font-size:0.85rem;">${h.name}</span>
+                            <span style="color:#fbbf24; font-size:0.7rem; font-weight:800;">${diffDays}d</span>
+                        </div>
+                        ${strategy}
+                    `;
+                    list.appendChild(item);
+                }
+            });
+        }
+
+        function loadEvents() {
+            events = MagicShared.load('agenda_events', []);
+        }
+
+        function saveEvents() {
+            MagicShared.save('agenda_events', events);
+        }
+
+        function renderCalendar() {
+            const grid = document.getElementById('calendarGrid');
+            const monthYearText = document.getElementById('currentMonthYear');
+            
+            // Limpiar celdas (mantener cabeceras)
+            const headers = Array.from(grid.querySelectorAll('.day-name'));
+            grid.innerHTML = '';
+            headers.forEach(h => grid.appendChild(h));
+
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+
+            const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+            monthYearText.innerText = `${monthNames[month]} ${year}`;
+
+            const firstDayOfMonth = new Date(year, month, 1).getDay();
+            // Ajuste para lunes como primer día (0-Sun, 1-Mon...) -> (1-Mon, ..., 0-Sun)
+            let startDay = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1;
+
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const prevMonthDays = new Date(year, month, 0).getDate();
+
+            // Días mes anterior
+            for(let i = startDay; i > 0; i--) {
+                const cell = document.createElement('div');
+                cell.className = 'day-cell other-month';
+                cell.innerText = prevMonthDays - i + 1;
+                grid.appendChild(cell);
+            }
+
+            // Días mes actual
+            const today = new Date();
+            for(let d = 1; d <= daysInMonth; d++) {
+                const cell = document.createElement('div');
+                cell.className = 'day-cell';
+                if(today.getDate() === d && today.getMonth() === month && today.getFullYear() === year) {
+                    cell.classList.add('today');
+                }
+
+                cell.innerHTML = `<span class="day-number">${d}</span>`;
+                
+                // Buscar feriados
+                const dateKey = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                if(HOLIDAYS_AR[dateKey]) {
+                    const h = HOLIDAYS_AR[dateKey];
+                    cell.classList.add(h.type);
+                    cell.innerHTML += `<div class="holiday-label">${h.type === 'holiday' ? '🇦🇷' : '💰'} ${h.name}</div>`;
+                }
+
+                // Buscar eventos
+                const dayEvents = events.filter(e => e.date === dateKey);
+                
+                if(dayEvents.length > 0) {
+                    const dots = document.createElement('div');
+                    dots.className = 'event-dots';
+                    dayEvents.forEach(() => {
+                        const dot = document.createElement('div');
+                        dot.className = 'dot';
+                        dots.appendChild(dot);
+                    });
+                    cell.appendChild(dots);
+                }
+
+                cell.onclick = () => openSidebar(year, month, d);
+                grid.appendChild(cell);
+            }
+        }
+
+        function openSidebar(year, month, day) {
+            const dateObj = new Date(year, month, day);
+            selectedDate = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+            
+            const options = { weekday: 'long', day: 'numeric', month: 'long' };
+            document.getElementById('sidebarDate').innerText = dateObj.toLocaleDateString('es-ES', options);
+            
+            renderSidebarEvents();
+            document.getElementById('daySidebar').classList.add('open');
+        }
+
+        function closeSidebar() {
+            document.getElementById('daySidebar').classList.remove('open');
+        }
+
+        function renderSidebarEvents() {
+            const list = document.getElementById('sidebarEvents');
+            list.innerHTML = '';
+            
+            const dayEvents = events.filter(e => e.date === selectedDate);
+            if(dayEvents.length === 0) {
+                list.innerHTML = '<p style="color: var(--text-muted); text-align: center;">No hay eventos para este día.</p>';
+                return;
+            }
+
+            dayEvents.forEach((ev, idx) => {
+                const item = document.createElement('div');
+                item.className = 'event-item';
+                item.innerHTML = `
+                    <div class="event-info">
+                        <h4>${ev.title}</h4>
+                        <span>${ev.time || '--:--'}</span>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function addEvent() {
+            const titleInput = document.getElementById('newEventTitle');
+            const timeInput = document.getElementById('newEventTime');
+            
+            if(!titleInput.value) return;
+
+            events.push({
+                title: titleInput.value,
+                date: selectedDate,
+                time: timeInput.value || '12:00'
+            });
+
+            titleInput.value = '';
+            timeInput.value = '';
+            
+            saveEvents();
+            renderSidebarEvents();
+            renderCalendar();
+        }
+
+        function prevMonth() { currentDate.setMonth(currentDate.getMonth() - 1); renderCalendar(); }
+        function nextMonth() { currentDate.setMonth(currentDate.getMonth() + 1); renderCalendar(); }
+    </script>
+</body>
+</html>

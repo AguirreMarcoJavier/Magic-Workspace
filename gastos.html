@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <!-- core Assets -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/magic-core.css">
+    <script src="js/magic-shared.js"></script>
+    <style>
+        :root {
+            --text-main: var(--text);
+            --card-glass: var(--card);
+            --card-border: var(--border);
+            --expense: #ef4444;
+            --income: #10b981;
+            --input-bg: var(--bg-dark);
+        }
+
+        body {
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .total-box {
+            text-align: center;
+            margin: 1.5rem 0 2rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 2rem;
+        }
+
+        .total-box h2 {
+            font-size: 3rem;
+            margin: 0;
+            text-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: color 0.5s ease;
+        }
+        .total-box p {
+            margin: 0;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 0.8rem;
+        }
+
+        .sub-stats {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .type-selector {
+            display: flex;
+            background: rgba(0,0,0,0.3);
+            border-radius: 12px;
+            padding: 0.3rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .type-btn {
+            flex: 1;
+            padding: 0.6rem;
+            text-align: center;
+            background: transparent;
+            color: var(--text-muted);
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 0;
+            box-shadow: none;
+        }
+
+        .type-btn.active.exp {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+        }
+        .type-btn.active.inc {
+            background: rgba(16, 185, 129, 0.2);
+            color: #6ee7b7;
+        }
+
+        .flex-inputs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            background: var(--input-bg);
+            border: 2px solid var(--border, rgba(255,255,255,0.1));
+            border-radius: 12px;
+            color: var(--text-main);
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #38bdf8;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
+        }
+
+        select option {
+            background: var(--card);
+            color: var(--text-main);
+        }
+
+        input[type=number] {
+            -moz-appearance: textfield;
+            appearance: textfield;
+        }
+
+        #submitBtn {
+            width: 100%;
+            padding: 1rem;
+            background-color: var(--expense);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 14px 0 rgba(239, 68, 68, 0.3);
+        }
+
+        #submitBtn:hover {
+            opacity: 0.8;
+            transform: translateY(-2px);
+        }
+
+        /* Chart Area */
+        .chart-box {
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background: rgba(0,0,0,0.2);
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.05);
+            display: none; /* hidden if no expenses */
+        }
+        .chart-box h3 { margin: 0 0 1rem 0; font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; text-align: center;}
+        
+        .bar-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.8rem;
+            gap: 1rem;
+        }
+        
+        .bar-label {
+            width: 80px;
+            font-size: 0.8rem;
+            text-align: right;
+            white-space: nowrap;
+        }
+        
+        .bar-track {
+            flex: 1;
+            height: 12px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .bar-fill {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .bar-amt {
+            width: 40px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* List Area */
+        .expense-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            max-height: 250px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+        .expense-list::-webkit-scrollbar { width: 6px; }
+        .expense-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+
+        .expense-item {
+            background: rgba(255,255,255,0.05);
+            padding: 1rem;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .expense-info { display: flex; flex-direction: column; }
+        .expense-desc { font-weight: 600; font-size: 1rem; }
+        .expense-date { font-size: 0.7rem; color: var(--text-muted); margin-top:2px; }
+        
+        .delete-btn {
+            background: none;
+            color: var(--text-muted);
+            border: none;
+            box-shadow: none;
+            width: auto;
+            padding: 0.5rem;
+            margin-left: 1rem;
+            cursor: pointer;
+        }
+        .delete-btn:hover { color: #fca5a5; background: rgba(255,255,255,0.1); border-radius: 8px;}
+
+    </style>
+</head>
+<body class="animated-bg">
+
+    <div class="view-container lg">
+        <a href="index.html" class="nav-link">← Volver al Dashboard</a>
+        <h1 class="gradient-heading">Finanzas Inteligentes</h1>
+        
+        <div class="total-box">
+            <p>Balance General</p>
+            <h2 id="totalDisplay">$0.00</h2>
+            <div class="sub-stats">
+                <span style="color:#34d399;" id="txtIncome">↑ $0.00</span>
+                <span style="color:#f87171;" id="txtExpense">↓ $0.00</span>
+            </div>
+        </div>
+
+        <div class="type-selector">
+            <button class="type-btn exp active" id="btnExp" onclick="setMode('expense')">Gasto (-)</button>
+            <button class="type-btn inc" id="btnInc" onclick="setMode('income')">Ingreso (+)</button>
+        </div>
+
+        <div style="margin-bottom: 1rem;">
+            <input type="text" id="descInput" placeholder="Concepto (Ej. Sueldo, Cripto, Comida...)">
+        </div>
+        <div class="flex-inputs">
+            <input type="number" id="amountInput" placeholder="$ Monto" style="max-width: 130px;">
+            <select id="catInput">
+                <option value="Comida">🍔 Comida</option>
+                <option value="Servicios">💡 Servicios</option>
+                <option value="Transporte">🚌 Transporte</option>
+                <option value="Ocio">🎮 Ocio</option>
+                <option value="Otros">📦 Otros</option>
+            </select>
+        </div>
+        
+        <button id="submitBtn" onclick="addTransaction()">Registrar Gasto</button>
+
+        <div class="chart-box" id="chartBox">
+            <h3>Top Áreas de Gasto</h3>
+            <div id="chartRenderArea"></div>
+        </div>
+
+        <h3 style="font-size:0.9rem; color: var(--text-muted); text-transform:uppercase; margin-top:2rem;">Historial Reciente</h3>
+        <div class="expense-list" id="expenseList">
+            <!-- Items via JS -->
+        </div>
+    </div>
+
+    <script>
+        // Migramos a key _v2 para evitar choques con el array viejo de gastos puramente negativos
+        let txs = [];
+        let currentMode = 'expense';
+
+        const catColors = {
+            "Comida": "#f43f5e",
+            "Servicios": "#3b82f6",
+            "Transporte": "#f59e0b",
+            "Ocio": "#10b981",
+            "Otros": "#8b5cf6"
+        };
+
+        function setMode(mode) {
+            currentMode = mode;
+            document.getElementById('btnExp').classList.toggle('active', mode === 'expense');
+            document.getElementById('btnInc').classList.toggle('active', mode === 'income');
+            
+            const btn = document.getElementById('submitBtn');
+            const cat = document.getElementById('catInput');
+            if(mode === 'income') {
+                btn.innerText = "Registrar Ingreso";
+                btn.style.backgroundColor = "var(--income)";
+                btn.style.boxShadow = "0 4px 14px 0 rgba(16, 185, 129, 0.3)";
+                cat.style.opacity = "0.3";
+                cat.disabled = true;
+            } else {
+                btn.innerText = "Registrar Gasto";
+                btn.style.backgroundColor = "var(--expense)";
+                btn.style.boxShadow = "0 4px 14px 0 rgba(239, 68, 68, 0.3)";
+                cat.style.opacity = "1";
+                cat.disabled = false;
+            }
+        }
+
+        function init() {
+            txs = MagicShared.load('finances_v2', []);
+            renderUI();
+        }
+
+        function saveData() {
+            MagicShared.save('finances_v2', txs);
+        }
+
+        function addTransaction() {
+            const desc = document.getElementById('descInput').value.trim();
+            const amount = parseFloat(document.getElementById('amountInput').value);
+
+            if(!desc || !amount || isNaN(amount)) {
+                alert("Completa concepto y monto válido.");
+                return;
+            }
+
+            const today = new Date();
+            const dateStr = today.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) + " " + today.toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit'});
+
+            txs.unshift({
+                id: Date.now(),
+                type: currentMode,
+                desc: desc,
+                amount: amount,
+                category: currentMode === 'income' ? null : document.getElementById('catInput').value,
+                date: dateStr
+            });
+
+            document.getElementById('descInput').value = '';
+            document.getElementById('amountInput').value = '';
+            
+            saveData();
+            renderUI();
+        }
+
+        function deleteTx(id) {
+            txs = txs.filter(t => t.id !== id);
+            saveData();
+            renderUI();
+        }
+
+        function updateChart(expTotalStr) {
+            const chartBox = document.getElementById('chartBox');
+            const renderArea = document.getElementById('chartRenderArea');
+            renderArea.innerHTML = '';
+
+            // Filtrar y grupar gastos
+            let exp = txs.filter(t => t.type === 'expense');
+            if(exp.length === 0) {
+                chartBox.style.display = 'none';
+                return;
+            }
+
+            chartBox.style.display = 'block';
+
+            let totalsByCat = { "Comida":0, "Servicios":0, "Transporte":0, "Ocio":0, "Otros":0 };
+            let maxCatAmt = 0;
+            
+            exp.forEach(e => {
+                totalsByCat[e.category] += e.amount;
+            });
+
+            // Encontrar el maximo para el 100% de la barra
+            for(let c in totalsByCat) {
+                if(totalsByCat[c] > maxCatAmt) maxCatAmt = totalsByCat[c];
+            }
+
+            // Ordenar categorías por monto
+            let sortedCats = Object.keys(totalsByCat).sort((a,b) => totalsByCat[b] - totalsByCat[a]);
+
+            sortedCats.forEach(cat => {
+                let amt = totalsByCat[cat];
+                if(amt === 0) return;
+
+                let pct = (amt / maxCatAmt) * 100;
+                let color = catColors[cat];
+
+                renderArea.innerHTML += `
+                    <div class="bar-row">
+                        <div class="bar-label">${cat}</div>
+                        <div class="bar-track">
+                            <div class="bar-fill" style="width: ${pct}%; background: ${color};"></div>
+                        </div>
+                        <div class="bar-amt">$${amt.toFixed(0)}</div>
+                    </div>
+                `;
+            });
+        }
+
+        function renderUI() {
+            let bal = 0, inc = 0, exp = 0;
+            
+            const list = document.getElementById('expenseList');
+            list.innerHTML = '';
+
+            txs.forEach((t) => {
+                if(t.type === 'income') {
+                    inc += t.amount;
+                    bal += t.amount;
+                } else {
+                    exp += t.amount;
+                    bal -= t.amount;
+                }
+
+                // Render Item
+                const sign = t.type === 'income' ? '+' : '-';
+                const color = t.type === 'income' ? '#34d399' : '#fca5a5';
+                const icon = t.type === 'income' ? '💰' : (t.category ? t.category.charAt(0) : '💸'); // Fallback icon
+
+                const div = document.createElement('div');
+                div.className = 'expense-item';
+                div.innerHTML = `
+                    <div class="expense-info">
+                        <span class="expense-desc">${t.desc}</span>
+                        <span class="expense-date">${t.date} ${t.category ? '• '+t.category : ''}</span>
+                    </div>
+                    <div style="display: flex; align-items: center;">
+                        <span style="font-weight: 800; font-size: 1.1rem; color: ${color};">${sign}$${t.amount.toFixed(2)}</span>
+                        <button class="delete-btn" onclick="deleteTx(${t.id})">✕</button>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+
+            // Update Dash
+            const totalDisplay = document.getElementById('totalDisplay');
+            totalDisplay.innerText = "$" + bal.toFixed(2);
+            if(bal > 0) totalDisplay.style.color = "#34d399";
+            else if (bal < 0) totalDisplay.style.color = "#fca5a5";
+            else totalDisplay.style.color = "var(--primary)";
+
+            document.getElementById('txtIncome').innerText = "↑ $" + inc.toFixed(2);
+            document.getElementById('txtExpense').innerText = "↓ $" + exp.toFixed(2);
+
+            // Update Chart
+            updateChart();
+        }
+
+        // Run
+        init();
+        setMode('expense');
+    </script>
+</body>
+</html>

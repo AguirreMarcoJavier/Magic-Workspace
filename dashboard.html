@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Selector de Herramientas</title>
+
+    <!-- core Assets -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/magic-core.css">
+    <script src="js/magic-shared.js"></script>
+
+    <style>
+        :root {
+            --text-main: var(--text);
+            --text-muted: var(--text-muted);
+            --accent: var(--primary);
+        }
+
+        body {
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+            background: var(--bg);
+            color: var(--text-main);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            max-width: 1100px;
+            width: 100%;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 2.2rem;
+            }
+        }
+
+        .card {
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 2rem;
+            border-radius: 24px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-top: 1px solid rgba(255, 255, 255, 0.3);
+            border-left: 1px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.1), transparent 70%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            pointer-events: none;
+        }
+
+        .card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 20px 40px 0 rgba(0, 0, 0, 0.4);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .card:hover::before {
+            opacity: 1;
+        }
+
+        .icon-container {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover .icon-container {
+            transform: scale(1.1) rotate(-5deg);
+        }
+
+        .card h2 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .card p {
+            margin: 0;
+            color: var(--text-muted);
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        /* Specific Icon Gradients */
+        .color-1 {
+            background: linear-gradient(135deg, #f59e0b, #ef4444);
+            color: white;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .color-2 {
+            background: linear-gradient(135deg, #10b981, #3b82f6);
+            color: white;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .color-3 {
+            background: linear-gradient(135deg, #8b5cf6, #ec4899);
+            color: white;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .color-4 {
+            background: linear-gradient(135deg, #3b82f6, #06b6d4);
+            color: white;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .color-5 {
+            background: linear-gradient(135deg, #f43f5e, #f97316);
+            color: white;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .color-6 {
+            background: linear-gradient(135deg, #2dd4bf, #0284c7);
+            color: white;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .color-7 {
+            background: linear-gradient(135deg, #9333ea, #10b981);
+            color: white;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .color-8 {
+            background: linear-gradient(135deg, #eab308, #84cc16);
+            color: white;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .color-9 {
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            color: white;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <h1>¿Qué te gustaría hacer hoy?</h1>
+        <p class="subtitle">Selecciona una de las herramientas de tu espacio de trabajo mágico.</p>
+    </div>
+
+    <div class="grid">
+
+        <a href="calculadora-edad.html" class="card">
+            <div class="icon-container color-1">⏱️</div>
+            <h2>Calculadora de Edad</h2>
+            <p>Descubre tu edad actual o viajar en el tiempo a cuando naciste.</p>
+        </a>
+
+        <a href="agenda.html" class="card">
+            <div class="icon-container color-2">📅</div>
+            <h2>Agenda y Eventos</h2>
+            <p>Organiza tu día, crea recordatorios y planifica tu futuro de forma inteligente.</p>
+        </a>
+
+        <a href="grabador.html" class="card">
+            <div class="icon-container color-3">🎙️</div>
+            <h2>Grabador de Notas</h2>
+            <p>Guarda tus ideas al vuelo mediante voz. Convierte tus pensamientos en texto.</p>
+        </a>
+
+        <a href="gemini.html" class="card">
+            <div class="icon-container color-4">✨</div>
+            <h2>Asistente Gemini</h2>
+            <p>Conversa localmente con tu asistente virtual integrado de diseño mágico.</p>
+        </a>
+
+        <a href="pomodoro.html" class="card">
+            <div class="icon-container color-5">🍅</div>
+            <h2>Reloj Pomodoro</h2>
+            <p>Mantén tu enfoque al máximo con ciclos de trabajo profundo.</p>
+        </a>
+
+        <a href="clima.html" class="card">
+            <div class="icon-container color-6">🌡️</div>
+            <h2>Clima Actual</h2>
+            <p>Conoce la temperatura y el estado del clima en tu ciudad en tiempo real.</p>
+        </a>
+
+        <a href="contrasenas.html" class="card">
+            <div class="icon-container color-7">🔐</div>
+            <h2>Generador Claves</h2>
+            <p>Crea claves seguras impenetrables. Criptografía en tu navegador.</p>
+        </a>
+
+        <a href="donde-esta.html" class="card">
+            <div class="icon-container color-9">🔍</div>
+            <h2>Localizador</h2>
+            <p>Rastreo de donde pones cada cosa. Filtros por Casa o Local.</p>
+        </a>
+
+        <a href="comunicaciones.html" class="card">
+            <div class="icon-container color-2">💬</div>
+            <h2>Comunicaciones</h2>
+            <p>Sistema de mensajes y backlog bidireccional entre IT y Ventas.</p>
+        </a>
+
+    </div>
+
+</body>
+
+</html>

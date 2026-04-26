@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reloj Pomodoro Pro</title>
+    
+    <!-- core Assets -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/magic-core.css">
+    <script src="js/magic-shared.js"></script>
+
+    <style>
+        :root {
+            --primary-accent: var(--primary);
+        }
+
+        body {
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .timer-circle {
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            border: 8px solid rgba(255, 255, 255, 0.1);
+            margin: 2rem auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.5), 0 0 30px rgba(244, 63, 94, 0.2);
+            transition: border-color 0.5s, box-shadow 0.5s;
+            position: relative;
+        }
+
+        .time-display {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 4.5rem;
+            font-weight: 700;
+            color: white;
+            text-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            letter-spacing: -2px;
+        }
+
+        .mode-text {
+            position: absolute;
+            bottom: 30px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--color-work);
+            transition: color 0.5s;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        button {
+            padding: 0.8rem 1.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        button.btn-primary {
+            background: var(--color-work);
+            border-color: var(--color-work);
+            box-shadow: 0 4px 15px rgba(244, 63, 94, 0.4);
+        }
+
+        button.btn-primary:hover {
+            background: #e11d48;
+        }
+
+        .modes {
+            margin-top: 2rem;
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .mode-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+        
+        .mode-btn.active {
+            color: white;
+            font-weight: 800;
+            border-bottom: 2px solid white;
+        }
+
+        /* Picture in Picture Styles */
+        .pip-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 8px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        .pip-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+
+        /* Mini Mode Adjustments */
+        body.pip-window {
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #042f2e !important; /* Mismo verde que el Dashboard */
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+        }
+        body.pip-window .pip-window h1, body.pip-window .modes, body.pip-window .nav-link, body.pip-window .pip-btn {
+            display: none !important;
+        }
+        body.pip-window .timer-circle {
+            width: 160px;
+            height: 160px;
+            margin: 0.5rem auto;
+        }
+        body.pip-window .time-display {
+            font-size: 3rem;
+        }
+        body.pip-window .mode-text {
+            bottom: 20px;
+            font-size: 0.7rem;
+        }
+        body.pip-window .controls button {
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+        }
+
+    </style>
+</head>
+<body class="animated-bg">
+
+    <div class="view-container md" id="appContainer">
+        <a href="index.html" class="nav-link">← Volver al Dashboard</a>
+        <h1 class="gradient-heading">Pomodoro</h1>
+        
+        <div class="modes">
+            <button class="mode-btn active" id="btnWork" onclick="setMode('work')">Trabajo</button>
+            <button class="mode-btn" id="btnBreak" onclick="setMode('break')">Descanso Corto</button>
+        </div>
+
+        <div class="timer-circle" id="timerCircle">
+            <button class="pip-btn" id="pipBtn" onclick="togglePiP()" title="Ver en el escritorio">🗗</button>
+            <div class="time-display" id="timeDisplay">25:00</div>
+            <div class="mode-text" id="modeText">Enfoque</div>
+        </div>
+        
+        <div class="controls">
+            <button class="btn-primary" id="startBtn" onclick="toggleTimer()">Iniciar</button>
+            <button onclick="resetTimer()">↻ Reiniciar</button>
+        </div>
+    </div>
+
+    <script>
+        const WORK_TIME = 25 * 60;
+        const BREAK_TIME = 5 * 60;
+        
+        let timeLeft = WORK_TIME;
+        let isRunning = false;
+        let currentMode = 'work'; // work | break
+        let timerInterval;
+
+        const timeDisplay = document.getElementById('timeDisplay');
+        const startBtn = document.getElementById('startBtn');
+        const modeText = document.getElementById('modeText');
+        const timerCircle = document.getElementById('timerCircle');
+        const container = document.getElementById('appContainer');
+
+        function updateDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timeDisplay.innerText = String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+            document.title = `${timeDisplay.innerText} - Pomodoro`;
+        }
+
+        function setMode(mode) {
+            if(isRunning) toggleTimer(); // pause
+            
+            currentMode = mode;
+            document.getElementById('btnWork').className = 'mode-btn' + (mode === 'work' ? ' active' : '');
+            document.getElementById('btnBreak').className = 'mode-btn' + (mode === 'break' ? ' active' : '');
+            
+            if(mode === 'work') {
+                timeLeft = WORK_TIME;
+                modeText.innerText = "Enfoque";
+                modeText.style.color = "var(--color-work)";
+                timerCircle.style.boxShadow = "inset 0 0 30px rgba(0,0,0,0.5), 0 0 30px rgba(244, 63, 94, 0.2)";
+            } else {
+                timeLeft = BREAK_TIME;
+                modeText.innerText = "Descanso";
+                modeText.style.color = "var(--color-break)";
+                timerCircle.style.boxShadow = "inset 0 0 30px rgba(0,0,0,0.5), 0 0 30px rgba(16, 185, 129, 0.2)";
+                container.style.boxShadow = "0 8px 32px 0 rgba(16, 185, 129, 0.1)";
+            }
+            updateDisplay();
+        }
+
+        function toggleTimer() {
+            if (isRunning) {
+                clearInterval(timerInterval);
+                startBtn.innerText = "Iniciar";
+                startBtn.classList.add('btn-primary');
+                startBtn.style.background = "";
+            } else {
+                timerInterval = setInterval(() => {
+                    timeLeft--;
+                    updateDisplay();
+                    if(timeLeft <= 0) {
+                        clearInterval(timerInterval);
+                        alert(currentMode === 'work' ? '¡Tiempo de trabajo finalizado! Tómate un respiro.' : 'Descanso completado. ¡A trabajar!');
+                        setMode(currentMode === 'work' ? 'break' : 'work');
+                    }
+                }, 1000);
+                startBtn.innerText = "Pausar";
+                startBtn.classList.remove('btn-primary');
+                startBtn.style.background = "rgba(255,255,255,0.2)";
+            }
+            isRunning = !isRunning;
+        }
+
+        function resetTimer() {
+            setMode(currentMode);
+        }
+
+        // Logic for Picture-in-Picture (DELEGATED TO BRIDGE)
+        function togglePiP() {
+            if (!('documentPictureInPicture' in window)) {
+                alert("Tu navegador no soporta la ventana flotante nativa. Intenta con Chrome o Edge actualizado.");
+                return;
+            }
+            
+            // Enviamos un mensaje al Dashboard (Mister Dashboard)
+            // para que el abra la ventana desde el contexto Top-Level
+            window.parent.postMessage({ type: 'OPEN_POMODORO_PIP' }, '*');
+        }
+
+        // Initialize state
+        updateDisplay();
+    </script>
+</body>
+</html>

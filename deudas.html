@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finanzas & Deudas - Magic Workspace</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/magic-core.css">
+    <script src="js/magic-shared.js"></script>
+    <style>
+        .fin-stat-card { display: flex; justify-content: space-between; align-items: center; padding: 1.5rem; }
+        .fin-stat-card span { font-size: 0.9rem; font-weight: 700; color: var(--text-muted); }
+        .fin-stat-card .fin-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.8rem; font-weight: 800; color: var(--text);
+            background: transparent; border: 1px solid transparent;
+            border-radius: 10px; padding: 0.3rem 0.6rem;
+            transition: border-color 0.2s; outline: none;
+            width: 180px; text-align: right;
+        }
+        .fin-stat-card .fin-value:focus { border-color: var(--primary); }
+        .highlight-card { border-color: var(--primary); box-shadow: 0 0 20px var(--primary-muted); }
+        .highlight-card .fin-value { color: var(--primary); }
+        .caja-card .fin-value { color: var(--success); }
+
+        .debt-list { display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 1rem; }
+        .debt-item { 
+            display: flex; justify-content: space-between; align-items: center; padding: 1rem; 
+            background: var(--bg-dark); border-radius: 14px; border: 1px solid var(--border);
+        }
+        .debt-item:hover { border-color: var(--primary); }
+        .debt-info { display: flex; flex-direction: column; gap: 2px; }
+        .debt-name { font-weight: 700; font-size: 0.95rem; }
+        .debt-priority { font-size: 0.7rem; text-transform: uppercase; color: var(--text-muted); font-weight: 800; letter-spacing: 1px; }
+        .debt-amount { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; font-weight: 800; color: #fca5a5; }
+        .btn-delete { color: var(--text-muted); cursor: pointer; font-size: 1.3rem; opacity: 0.5; padding: 0.2rem 0.5rem; }
+        .btn-delete:hover { color: var(--danger); opacity: 1; }
+
+        .add-debt-form { 
+            display: none; flex-direction: column; gap: 0.8rem; 
+            background: var(--bg-dark); border: 1px solid var(--border);
+            border-radius: 16px; padding: 1.2rem; margin-top: 0.8rem;
+        }
+        .add-debt-form.visible { display: flex; }
+        .priority-btns { display: flex; gap: 0.6rem; }
+        .priority-btn { 
+            flex: 1; padding: 0.6rem; border: 1px solid var(--border); border-radius: 10px;
+            background: transparent; color: var(--text-muted); cursor: pointer; font-weight: 700; font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+        .priority-btn.active { background: var(--primary); border-color: var(--primary); color: white; }
+        .form-actions { display: flex; gap: 0.6rem; }
+        .balance-row { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-top: 1px solid var(--border); margin-top: 0.5rem; }
+        .balance-label { font-size: 0.75rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; }
+        .balance-value { font-family: monospace; font-size: 1.1rem; font-weight: 800; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <h1 class="gradient-heading">🚩 Control Financiero</h1>
+            <p>Monitoreo de ingresos y deudas prioritarias.</p>
+        </header>
+
+        <div class="magic-grid">
+            <!-- stats -->
+            <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                <div class="magic-card fin-stat-card">
+                    <span>Ingresos Esperados</span>
+                    <input type="number" class="fin-value" id="finExpected" placeholder="0" oninput="saveAndRecalc()">
+                </div>
+                <div class="magic-card fin-stat-card highlight-card">
+                    <span>Ingresos Reales</span>
+                    <input type="number" class="fin-value" id="finReal" placeholder="0" oninput="saveAndRecalc()">
+                </div>
+                <div class="magic-card fin-stat-card caja-card">
+                    <span>Caja Total</span>
+                    <input type="number" class="fin-value" id="finCash" placeholder="0" oninput="saveAndRecalc()">
+                </div>
+                <div class="magic-card" style="padding: 1.2rem;">
+                    <div class="balance-row">
+                        <span class="balance-label">Total Deudas</span>
+                        <span class="balance-value" id="totalDebts" style="color: #fca5a5;">$0</span>
+                    </div>
+                    <div class="balance-row">
+                        <span class="balance-label">Balance Libre</span>
+                        <span class="balance-value" id="freeBalance" style="color: var(--success);">$0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- debts -->
+            <div class="magic-card">
+                <h3>Deudas Prioritarias</h3>
+                <div id="debtsContainer" class="debt-list"></div>
+
+                <button class="magic-btn secondary" onclick="toggleForm()" id="btnAddDebt">+ Agregar Deuda</button>
+
+                <div class="add-debt-form" id="addDebtForm">
+                    <div class="input-group">
+                        <label>Nombre de la deuda</label>
+                        <input type="text" id="debtName" placeholder="ej. Tarjeta Visa">
+                    </div>
+                    <div class="input-group">
+                        <label>Monto ($)</label>
+                        <input type="number" id="debtAmount" placeholder="0">
+                    </div>
+                    <div class="input-group">
+                        <label>Prioridad</label>
+                        <div class="priority-btns">
+                            <button class="priority-btn active" id="p-Alta" onclick="setPriority('Alta')">🔴 Alta</button>
+                            <button class="priority-btn" id="p-Media" onclick="setPriority('Media')">🟡 Media</button>
+                            <button class="priority-btn" id="p-Baja" onclick="setPriority('Baja')">🟢 Baja</button>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button class="magic-btn" onclick="confirmAddDebt()" style="flex:1">Guardar Deuda</button>
+                        <button class="magic-btn secondary" onclick="toggleForm()">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+            <!-- Vencimientos & Servicios -->
+            <div class="magic-card">
+                <h3>Vencimientos Cercanos</h3>
+                <div id="upcomingContainer" class="debt-list"></div>
+
+                <button class="magic-btn secondary" onclick="toggleUpcomingForm()" id="btnAddUpcoming">+ Añadir Servicio</button>
+
+                <div class="add-debt-form" id="addUpcomingForm">
+                    <div class="input-group">
+                        <label>Nombre del Gasto/Servicio</label>
+                        <input type="text" id="upName" placeholder="ej. Netflix, Internet, Alquiler">
+                    </div>
+                    <div class="input-group">
+                        <label>Monto Estimado ($)</label>
+                        <input type="number" id="upAmount" placeholder="0">
+                    </div>
+                    <div class="input-group">
+                        <label>Día de Vencimiento (1-31)</label>
+                        <input type="number" id="upDay" placeholder="1-31" min="1" max="31">
+                    </div>
+                    <div class="form-actions">
+                        <button class="magic-btn" onclick="confirmAddUpcoming()" style="flex:1">Guardar</button>
+                        <button class="magic-btn secondary" onclick="toggleUpcomingForm()">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let finance = MagicShared.load('strategic_finance', { expected: 0, real: 0, cash: 0, debts: [], upcoming: [] });
+        if(!finance.upcoming) finance.upcoming = [];
+        let selectedPriority = 'Alta';
+
+        function setPriority(p) {
+            selectedPriority = p;
+            ['Alta', 'Media', 'Baja'].forEach(x => {
+                document.getElementById('p-' + x)?.classList.toggle('active', x === p);
+            });
+        }
+
+        function toggleForm() {
+            const form = document.getElementById('addDebtForm');
+            form.classList.toggle('visible');
+            if (form.classList.contains('visible')) {
+                document.getElementById('debtName').focus();
+                document.getElementById('debtName').value = '';
+                document.getElementById('debtAmount').value = '';
+                setPriority('Alta');
+            }
+        }
+
+        function confirmAddDebt() {
+            const name = document.getElementById('debtName').value.trim();
+            const amount = parseFloat(document.getElementById('debtAmount').value) || 0;
+            if (!name || !amount) { alert('Completá el nombre y el monto.'); return; }
+            finance.debts.push({ name, amount, priority: selectedPriority });
+            saveAndRecalc();
+            toggleForm();
+        }
+
+        function removeDebt(idx) {
+            finance.debts.splice(idx, 1);
+            saveAndRecalc();
+        }
+
+        function saveAndRecalc() {
+            finance.expected = parseFloat(document.getElementById('finExpected').value) || 0;
+            finance.real     = parseFloat(document.getElementById('finReal').value) || 0;
+            finance.cash     = parseFloat(document.getElementById('finCash').value) || 0;
+            MagicShared.save('strategic_finance', finance);
+            render();
+        }
+
+        function render() {
+            document.getElementById('finExpected').value = finance.expected || '';
+            document.getElementById('finReal').value     = finance.real || '';
+            document.getElementById('finCash').value     = finance.cash || '';
+
+            const totalDebts = finance.debts.reduce((a, d) => a + (parseFloat(d.amount) || 0), 0);
+            const freeBalance = (finance.cash || 0) - totalDebts;
+
+            document.getElementById('totalDebts').textContent  = '$' + totalDebts.toLocaleString();
+            document.getElementById('freeBalance').textContent = '$' + freeBalance.toLocaleString();
+            document.getElementById('freeBalance').style.color = freeBalance >= 0 ? 'var(--success)' : 'var(--danger)';
+
+            const list = document.getElementById('debtsContainer');
+            list.innerHTML = '';
+            finance.debts.forEach((d, idx) => {
+                const div = document.createElement('div');
+                div.className = 'debt-item';
+                div.innerHTML = `
+                    <div class="debt-info">
+                        <span class="debt-name">${d.name}</span>
+                        <span class="debt-priority">${d.priority}</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:1.5rem">
+                        <span class="debt-amount">$${parseFloat(d.amount).toLocaleString()}</span>
+                        <span class="btn-delete" onclick="removeDebt(${idx})">×</span>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+
+            // Rentar upcoming
+            const upList = document.getElementById('upcomingContainer');
+            upList.innerHTML = '';
+            
+            // Ordenar por días faltantes
+            const today = new Date();
+            const currentDay = today.getDate();
+            const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+
+            let upcomingData = finance.upcoming.map((u, idx) => {
+                let dueDay = parseInt(u.dueDay);
+                let daysLeft = 0;
+                if (dueDay > currentDay) {
+                    daysLeft = dueDay - currentDay;
+                } else if (dueDay === currentDay) {
+                    daysLeft = 0;
+                } else {
+                    daysLeft = (daysInMonth - currentDay) + dueDay;
+                }
+                return { ...u, daysLeft, originalIdx: idx };
+            });
+
+            upcomingData.sort((a, b) => a.daysLeft - b.daysLeft);
+
+            upcomingData.forEach(u => {
+                const div = document.createElement('div');
+                div.className = 'debt-item';
+                
+                let timeColor = 'var(--text-muted)';
+                let timeLabel = `En ${u.daysLeft} días`;
+                
+                if (u.daysLeft === 0) {
+                    timeColor = 'var(--danger)'; timeLabel = 'VENCE HOY';
+                } else if (u.daysLeft <= 3) {
+                    timeColor = '#fca5a5'; timeLabel = `En ${u.daysLeft} días (Pronto)`;
+                } else if (u.daysLeft <= 7) {
+                    timeColor = 'var(--primary)'; timeLabel = `En ${u.daysLeft} días`;
+                }
+
+                div.innerHTML = `
+                    <div class="debt-info">
+                        <span class="debt-name">${u.name}</span>
+                        <span class="debt-priority" style="color: ${timeColor};">${timeLabel} (Día ${u.dueDay})</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:1.5rem">
+                        <span class="debt-amount" style="color:var(--text);">$${parseFloat(u.amount).toLocaleString()}</span>
+                        <span class="btn-delete" title="Marcar como pagado / Eliminar" onclick="removeUpcoming(${u.originalIdx})">×</span>
+                    </div>
+                `;
+                upList.appendChild(div);
+            });
+        }
+
+        // Logic for Upcoming
+        function toggleUpcomingForm() {
+            const form = document.getElementById('addUpcomingForm');
+            form.classList.toggle('visible');
+            if (form.classList.contains('visible')) {
+                document.getElementById('upName').focus();
+                document.getElementById('upName').value = '';
+                document.getElementById('upAmount').value = '';
+                document.getElementById('upDay').value = '';
+            }
+        }
+
+        function confirmAddUpcoming() {
+            const name = document.getElementById('upName').value.trim();
+            const amount = parseFloat(document.getElementById('upAmount').value) || 0;
+            const dueDay = parseInt(document.getElementById('upDay').value);
+            
+            if (!name || amount <= 0 || !dueDay || dueDay < 1 || dueDay > 31) { 
+                alert('Completá el nombre, monto válido y un día del mes entre 1 y 31.'); 
+                return; 
+            }
+            
+            finance.upcoming.push({ name, amount, dueDay });
+            saveAndRecalc();
+            toggleUpcomingForm();
+        }
+
+        function removeUpcoming(idx) {
+            finance.upcoming.splice(idx, 1);
+            saveAndRecalc();
+        }
+
+        render();
+    </script>
+</body>
+</html>

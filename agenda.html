@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda Personal</title>
+    
+    <!-- core Assets -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/magic-core.css">
+    <script src="js/magic-shared.js"></script>
+    <style>
+        :root {
+            --primary-accent: var(--primary);
+        }
+
+        
+
+        
+
+        
+
+        .input-group {
+            margin-bottom: 1rem;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* Hack temporal para el icono blanco en Chrome/Edge */
+        input::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+        }
+
+        .events-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        .events-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .events-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
+
+        .event-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: transform 0.2s ease;
+        }
+
+        .event-card:hover {
+            transform: scale(1.02);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .event-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .event-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .event-time {
+            color: #34d399;
+            font-size: 0.85rem;
+        }
+
+        .event-actions {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .gcal-btn {
+            background: rgba(59, 130, 246, 0.2);
+            color: #93c5fd;
+            text-decoration: none;
+            border-radius: 8px;
+            padding: 0.5rem 0.8rem;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            border: 1px solid rgba(59, 130, 246, 0.1);
+        }
+
+        .gcal-btn:hover {
+            background: rgba(59, 130, 246, 0.5);
+            color: white;
+            transform: translateY(0);
+        }
+
+        .delete-btn {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            border: none;
+            border-radius: 8px;
+            padding: 0.5rem 0.8rem;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin: 0;
+            width: auto;
+            box-shadow: none;
+        }
+
+        .delete-btn:hover {
+            background: rgba(239, 68, 68, 0.5);
+            color: white;
+            transform: translateY(0);
+        }
+
+        .empty-state {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            padding: 1rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="view-container sm">
+        <a href="index.html" class="nav-link">← Volver al Dashboard</a>
+        <h1 class="gradient-heading">Mi Agenda</h1>
+
+        <div class="input-group">
+            <label for="eventTitle">¿Qué tienes planeado?</label>
+            <input type="text" id="eventTitle" placeholder="Ej. Reunión con equipo...">
+        </div>
+        <div class="input-group">
+            <label for="eventDate">Día</label>
+            <input type="date" id="eventDate">
+        </div>
+        <div class="input-group">
+            <label for="eventTime">Hora</label>
+            <input type="time" id="eventTime">
+        </div>
+
+        <button class="magic-btn" onclick="addEvent()" style="width: 100%; margin-top: 1rem; margin-bottom: 2rem;">Agregar Evento</button>
+
+        <div class="events-list" id="eventsList">
+            <!-- Events rendered here by JS -->
+        </div>
+    </div>
+
+    <script>
+        let events = MagicShared.load('agenda_events', []);
+
+        window.addEventListener('DOMContentLoaded', () => {
+            renderEvents();
+        });
+
+        function saveEvents() {
+            MagicShared.save('agenda_events', events);
+        }
+
+        function renderEvents() {
+            const list = document.getElementById('eventsList');
+            list.innerHTML = '';
+
+            if (events.length === 0) {
+                list.innerHTML = '<div class="empty-state">No tienes eventos planeados. ¡Crea uno arriba!</div>';
+                return;
+            }
+
+            // Ordenar por fecha y hora
+            events.sort((a, b) => new Date(a.date + 'T' + a.time) - new Date(b.date + 'T' + b.time));
+
+            events.forEach((ev, index) => {
+                const card = document.createElement('div');
+                card.className = 'event-card';
+
+                const dateObj = new Date(ev.date + 'T' + ev.time);
+                const options = { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+                const formattedDate = dateObj.toLocaleDateString('es-ES', options);
+
+                // Formato YYYYMMDDTHHmmSS para Google Calendar
+                const dateStr = ev.date.replace(/-/g, '');
+                const timeStr = ev.time.replace(/:/g, '') + '00';
+
+                const endObj = new Date(dateObj.getTime() + 60 * 60 * 1000);
+                const endMonth = String(endObj.getMonth() + 1).padStart(2, '0');
+                const endDay = String(endObj.getDate()).padStart(2, '0');
+                const endHours = String(endObj.getHours()).padStart(2, '0');
+                const endMinutes = String(endObj.getMinutes()).padStart(2, '0');
+                const endDateStr = `${endObj.getFullYear()}${endMonth}${endDay}`;
+                const endTimeStr = `${endHours}${endMinutes}00`;
+
+                const gCalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(ev.title)}&dates=${dateStr}T${timeStr}/${endDateStr}T${endTimeStr}`;
+
+                card.innerHTML = `
+                    <div class="event-details">
+                        <span class="event-title">${ev.title}</span>
+                        <span class="event-time">${formattedDate}</span>
+                    </div>
+                    <div class="event-actions">
+                        <a href="${gCalUrl}" target="_blank" class="gcal-btn" title="Añadir a Google Calendar">📅 Sync</a>
+                        <button class="delete-btn" onclick="deleteEvent(${index})">✕</button>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        function addEvent() {
+            const titleInput = document.getElementById('eventTitle');
+            const dateInput = document.getElementById('eventDate');
+            const timeInput = document.getElementById('eventTime');
+
+            if (!titleInput.value || !dateInput.value || !timeInput.value) {
+                alert('Por favor completa todos los campos.');
+                return;
+            }
+
+            events.push({
+                title: titleInput.value,
+                date: dateInput.value,
+                time: timeInput.value
+            });
+
+            titleInput.value = '';
+            dateInput.value = '';
+            timeInput.value = '';
+
+            saveEvents();
+            renderEvents();
+        }
+
+        function deleteEvent(index) {
+            events.splice(index, 1);
+            saveEvents();
+            renderEvents();
+        }
+    </script>
+</body>
+
+</html>
