@@ -1,0 +1,218 @@
+/* 
+ * 🏗️ Magic Workspace Core CSS v7.0
+ * Centraliza variables de tema, fuentes y un sistema de componentes para apps modulares.
+ */
+
+:root {
+    --bg: #0a0a0a;
+    --bg-dark: #050505;
+    --card: #121212;
+    --card-dark: #121212;
+    --primary: #a855f7;
+    --primary-muted: rgba(168, 85, 247, 0.1);
+    --border: rgba(255, 255, 255, 0.05);
+    --text: #ffffff;
+    --text-muted: #64748b;
+    --success: #10b981;
+    --danger: #ef4444;
+    --indigo: #6366f1;
+    --pink: #ec4899;
+    --cyan: #06b6d4;
+}
+
+body.light-mode {
+    --bg: #f8fafc;
+    --bg-dark: #f1f5f9;
+    --card: #ffffff;
+    --card-dark: #ffffff;
+    --text: #0f172a;
+    --text-muted: #475569;
+    --border: rgba(0, 0, 0, 0.08);
+}
+
+/* Base Styles */
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    margin: 0;
+    transition: background 0.4s ease, color 0.4s ease;
+    overflow-x: hidden;
+}
+
+/* App Layout System */
+.app-container {
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem;
+    box-sizing: border-box;
+    animation: fadeIn 0.5s ease-out;
+}
+
+.view-container {
+    background: var(--card);
+    padding: 2.5rem;
+    border-radius: 20px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+    width: 100%;
+    border: 1px solid var(--border);
+    backdrop-filter: blur(20px);
+    margin-top: 2rem;
+    box-sizing: border-box;
+}
+.view-container.sm { max-width: 450px; margin-left: auto; margin-right: auto; margin-top: 2rem; }
+.view-container.md { max-width: 700px; margin-left: auto; margin-right: auto; margin-top: 2rem; }
+.view-container.lg { max-width: 1100px; margin-left: auto; margin-right: auto; margin-top: 2rem; }
+
+
+.app-header {
+    margin-bottom: 2.5rem;
+}
+.app-header h1 {
+    font-size: 2.8rem;
+    font-weight: 800;
+    margin: 0;
+    letter-spacing: -2px;
+    background: linear-gradient(to right, var(--primary), var(--pink));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.app-header p {
+    color: var(--text-muted);
+    margin: 0.5rem 0 0 0;
+    font-size: 1.1rem;
+}
+
+/* Magic Grid & Cards */
+.magic-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.magic-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 1.5rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+.magic-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--primary);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+}
+
+.magic-card h3 { 
+    margin: 0; font-size: 1.2rem; font-weight: 800; 
+    display: flex; justify-content: space-between; align-items: center;
+}
+
+/* Inputs & Forms */
+input, select, textarea {
+    background: var(--bg-dark);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 14px;
+    padding: 0.8rem 1.2rem;
+    font-family: inherit;
+    outline: none;
+    transition: all 0.3s;
+}
+input:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 10px var(--primary-muted); }
+
+.input-group { display: flex; flex-direction: column; gap: 0.6rem; }
+.input-group label { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; }
+
+/* Buttons */
+.magic-btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 1rem 1.8rem;
+    border-radius: 14px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8rem;
+    font-size: 0.95rem;
+}
+.magic-btn:hover { transform: scale(1.03); filter: brightness(1.1); box-shadow: 0 8px 20px var(--primary-muted); }
+
+.magic-btn.secondary { background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-muted); }
+.magic-btn.secondary:hover { color: var(--text); border-color: var(--text); }
+.magic-btn.danger:hover { background: var(--danger); }
+
+/* Animations */
+@keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* Shared Utilities */
+.text-muted { color: var(--text-muted); }
+.text-success { color: var(--success); }
+.text-danger { color: var(--danger); }
+.mono { font-family: 'JetBrains Mono', monospace; }
+
+/* Animated Background Standard */
+.animated-bg:not(.light-mode) {
+    background: linear-gradient(-45deg, #0f172a, #2e1065, #1e3a8a, #4c1d95, #0f172a) !important;
+    background-size: 400% 400% !important;
+    animation: magicBackground 15s ease infinite;
+}
+
+@keyframes magicBackground {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Back Link Standard */
+.nav-link {
+    display: inline-block;
+    margin-bottom: 2rem;
+    color: #93c5fd;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: color 0.3s;
+}
+.nav-link:hover {
+    color: #fff;
+}
+
+/* Gradient Heading Standard */
+.gradient-heading {
+    margin-top: 0;
+    font-size: 2rem;
+    font-weight: 800;
+    background: linear-gradient(to right, #60a5fa, #c084fc);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0.5rem;
+    text-align: center;
+}
+
+
+@media (max-width: 768px) {
+    body { padding: 1rem !important; }
+    .app-container { padding: 1rem; }
+    .view-container { 
+        padding: 1.5rem !important; 
+        margin-top: 0.5rem !important; 
+        border-radius: 16px !important; 
+    }
+    .magic-grid { grid-template-columns: 1fr; }
+    .app-header h1 { font-size: 2.2rem; }
+}
