@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sala de Juegos IA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/magic-core.css">
+    <script src="js/magic-shared.js"></script>
+    <style>
+        .games-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; margin-top: 2rem; }
+        .game-card {
+            background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 2.5rem; text-align: center;
+            cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .game-card:hover { transform: translateY(-10px); border-color: var(--primary); box-shadow: 0 15px 35px var(--primary-muted); }
+        .game-icon { font-size: 4rem; margin-bottom: 1.5rem; }
+        .game-title { font-size: 1.5rem; font-weight: 800; margin: 0 0 0.5rem 0; color: var(--text); }
+        .game-desc { color: var(--text-muted); font-size: 0.95rem; margin: 0; line-height: 1.5; }
+        .ai-badge { background: linear-gradient(135deg, var(--primary), var(--pink)); color: white; padding: 0.4rem 1.2rem; border-radius: 20px; font-size: 0.75rem; font-weight: 800; margin-top: 1.5rem; letter-spacing: 1px;}
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <h1>🎮 Arcade IA</h1>
+            <p>Compite en juegos clásicos de ingenio contra la red neuronal de Google Gemini.</p>
+        </header>
+
+        <div class="games-grid">
+            <div class="game-card" onclick="window.location.href='juego-tictactoe.html'">
+                <div class="game-icon">❌⭕</div>
+                <h2 class="game-title">Ta-Te-Ti</h2>
+                <p class="game-desc">El clásico de siempre, perfeccionado para ser invencible o cometer errores humanos calculados.</p>
+                <div class="ai-badge">VS GEMINI</div>
+            </div>
+            
+            <div class="game-card" onclick="window.location.href='juego-ajedrez.html'">
+                <div class="game-icon">♟️</div>
+                <h2 class="game-title">Ajedrez</h2>
+                <p class="game-desc">El juego de los reyes en tu tablero táctico impulsado por el motor cognitivo de Google.</p>
+                <div class="ai-badge">VS GEMINI</div>
+            </div>
+
+            <div class="game-card" onclick="alert('Damas se implementará en el próximo paso.')">
+                <div class="game-icon">🔴⚫</div>
+                <h2 class="game-title">Damas</h2>
+                <p class="game-desc">Captura, salta y corona en este desafío tradicional contra un adversario sintético.</p>
+                <div class="ai-badge">VS GEMINI</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asistente Gemini AI</title>
+    
+    <!-- core Assets -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/magic-core.css">
+    <script src="js/magic-shared.js"></script>
+    <style>
+        :root {
+            --accent-color: var(--primary);
+        }
+
+        body {
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header 
+
+        .header-icon {
+            font-size: 2rem;
+        }
+
+        .chat-box {
+            flex-grow: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            padding-right: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Custom Scrollbar */
+        .chat-box::-webkit-scrollbar { width: 6px; }
+        .chat-box::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+
+        .message {
+            max-width: 85%;
+            padding: 1rem 1.2rem;
+            border-radius: 16px;
+            line-height: 1.5;
+            font-size: 0.95rem;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .ai-bubble {
+            background: var(--card); border: 1px solid var(--border);
+            padding: 1rem 1.5rem; border-radius: 20px 20px 20px 5px; max-width: 85%;
+            font-size: 0.95rem; line-height: 1.6; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        body.light-mode .ai-bubble { background: #f1f5f9; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .msg-ai {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom-left-radius: 4px;
+            align-self: flex-start;
+        }
+
+        .msg-user {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            color: white;
+            border-bottom-right-radius: 4px;
+            align-self: flex-end;
+        }
+
+        .input-area {
+            display: flex;
+            gap: 0.5rem;
+            background: rgba(15, 23, 42, 0.4);
+            padding: 0.5rem;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        input[type="text"] {
+            flex-grow: 1;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 1rem;
+            padding: 0.5rem 1rem;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+        }
+
+        input[type="text"]::placeholder {
+            color: var(--text-muted);
+        }
+
+        button {
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            border: none;
+            background: linear-gradient(135deg, #60a5fa, #c084fc);
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
+        }
+
+        .typing-indicator {
+            display: inline-flex;
+            gap: 4px;
+            padding: 1rem 1.2rem;
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 16px;
+            border-bottom-left-radius: 4px;
+            align-self: flex-start;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            align-items: center;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            background: #cbd5e1;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+
+        .dot:nth-child(1) { animation-delay: -0.32s; }
+        .dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+
+        .setup-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 10000;
+        }
+        .setup-modal {
+            background: var(--bg); border: 1px solid var(--border);
+            padding: 2.5rem; border-radius: 20px; max-width: 450px;
+            text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        .setup-modal input {
+            width: 100%; padding: 1rem; margin: 1.5rem 0;
+            background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px; color: white; font-size: 1rem; box-sizing: border-box;
+        }
+        .setup-modal input:focus {
+            outline: none; border-color: var(--primary);
+        }
+        .setup-modal button.btn-magic {
+            background: linear-gradient(135deg, var(--primary), var(--pink));
+            color: white; border: none; padding: 1rem 2rem;
+            border-radius: 12px; font-weight: 800; cursor: pointer;
+            width: 100%; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(236, 72, 153, 0.3);
+        }
+        .setup-modal button.btn-magic:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="setup-overlay" id="setupOverlay" style="display: none;">
+        <div class="setup-modal">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🔐</div>
+            <h2 class="gradient-heading" style="font-size: 1.5rem;">Configuración Segura</h2>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 1rem; line-height: 1.5;">
+                Por motivos de seguridad, tu clave de la API de Gemini no debe estar guardada en el código público de la web.<br><br>
+                Ingresa tu <b>API Key</b> a continuación. Se guardará de forma secreta únicamente en este navegador (LocalStorage) y nunca se subirá a internet.
+            </p>
+            <input type="password" id="apiKeyInput" placeholder="AIzaSy...">
+            <button class="btn-magic" onclick="saveApiKey()">Guardar y Conectar</button>
+            <p style="color: #ef4444; font-size: 0.8rem; margin-top: 1rem; display: none;" id="setupError">Debes ingresar una clave válida.</p>
+        </div>
+    </div>
+
+    <div class="view-container md">
+        <a href="dashboard.html" class="nav-link">← Volver al Dashboard</a>
+        
+        <div class="header">
+            <div class="header-icon">✨</div>
+            <h1 class="gradient-heading">Asistente Gemini</h1>
+        </div>
+
+        <div class="chat-box" id="chatBox">
+            <div class="message msg-ai">
+                ¡Hola! Soy tu asistente IA integrado y completamente real. ¿En qué te puedo ayudar hoy?
+            </div>
+        </div>
+
+        <div class="input-area">
+            <input type="text" id="userInput" placeholder="Escribe tu mensaje aquí..." autocomplete="off">
+            <button onclick="sendMessage()">➤</button>
+        </div>
+    </div>
+
+    <script>
+        const chatBox = document.getElementById('chatBox');
+        const userInput = document.getElementById('userInput');
+
+        // Historial para mantener el contexto de la conversación
+        let chatHistory = []; 
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if (!MagicAI.getApiKey()) {
+                document.getElementById('setupOverlay').style.display = 'flex';
+            }
+        });
+
+        function saveApiKey() {
+            const key = document.getElementById('apiKeyInput').value.trim();
+            if(!key) {
+                document.getElementById('setupError').style.display = 'block';
+                return;
+            }
+            localStorage.setItem('magic_gemini_api_key', key);
+            document.getElementById('setupOverlay').style.display = 'none';
+            addMessage("¡Clave configurada exitosamente! Mis motores ya están listos.", 'msg-ai');
+        }
+
+        async function sendMessage() {
+            const text = userInput.value.trim();
+            if(!text) return;
+
+            addMessage(text, 'msg-user');
+            userInput.value = '';
+
+            const typing = document.createElement('div');
+            typing.className = 'typing-indicator';
+            typing.id = 'typingIndicator';
+            typing.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+            chatBox.appendChild(typing);
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            try {
+                // LLAMADA AL MOTOR COMPARTIDO MAGIC AI
+                const aiText = await MagicAI.askGemini(text, chatHistory);
+
+                const ind = document.getElementById('typingIndicator');
+                if(ind) ind.remove();
+
+                addMessage(aiText, 'msg-ai');
+                
+                chatHistory.push({ role: "user", parts: [{ text: text }] });
+                chatHistory.push({ role: "model", parts: [{ text: aiText }] });
+
+            } catch (error) {
+                const ind = document.getElementById('typingIndicator');
+                if(ind) ind.remove();
+                if (error.message === "API_KEY_MISSING") {
+                    document.getElementById('setupOverlay').style.display = 'flex';
+                } else {
+                    addMessage("Hubo un error de IA: " + error.message, 'msg-ai');
+                }
+            }
+        }
+
+        function addMessage(text, typeClass) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${typeClass}`;
+            // Simple render to avoid raw HTML injection issues for pure text:
+            msgDiv.innerText = text;
+            chatBox.appendChild(msgDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        userInput.addEventListener('keypress', function(e) {
+            if(e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>

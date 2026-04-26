@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cerebro Auxiliar - Magic Workspace</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/magic-core.css">
+    <script src="js/magic-shared.js"></script>
+
+    <style>
+        .capture-card { grid-column: 1 / -1; }
+        .capture-row { display: flex; gap: 1rem; }
+        .capture-row input { flex-grow: 1; font-size: 1.1rem; }
+        
+        .brain-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; margin-top: 2rem; width: 100%; }
+        .brain-item { 
+            padding: 1.2rem; background: var(--card); border-radius: 20px; border: 1px solid var(--border); 
+            border-left: 6px solid var(--primary); display: flex; justify-content: space-between; align-items: flex-start;
+        }
+        .brain-text { flex-grow: 1; font-weight: 600; font-size: 1rem; color: var(--text); line-height: 1.5; }
+        .importance { font-size: 0.6rem; font-weight: 900; background: var(--bg-dark); padding: 4px 8px; border-radius: 8px; margin-left: 1rem; text-transform: uppercase; }
+        .imp-Alta { color: #fca5a5; } .imp-Media { color: #fde047; } .imp-Baja { color: #93c5fd; }
+        .btn-delete { color: var(--text-muted); cursor: pointer; font-size: 1.3rem; margin-left: 10px; }
+        .btn-delete:hover { color: var(--danger); }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <header class="app-header">
+            <h1 class="gradient-heading">🎙️ Cerebro Auxiliar</h1>
+            <p>Vuelca tus ideas al instante para evitar la dispersión.</p>
+        </header>
+
+        <div class="magic-card capture-card">
+            <h3>Captura Rápida</h3>
+            <div class="capture-row">
+                <input type="text" id="brainInput" placeholder="¿Qué tienes en mente?" onkeydown="if(event.key==='Enter') addBrainDump()">
+                <select id="brainImportance">
+                    <option value="Baja">Baja</option>
+                    <option value="Media" selected>Media</option>
+                    <option value="Alta">Alta</option>
+                </select>
+                <button class="magic-btn" onclick="addBrainDump()">Capturar</button>
+            </div>
+        </div>
+
+        <div id="brainList" class="brain-list"></div>
+    </div>
+
+    <script>
+        let brain = MagicShared.load('strategic_brain', []);
+
+        function save() { MagicShared.save('strategic_brain', brain); render(); }
+
+        function addBrainDump() {
+            const input = document.getElementById('brainInput');
+            const imp = document.getElementById('brainImportance');
+            if(!input.value.trim()) return;
+            brain.unshift({ id: Date.now(), text: input.value, importance: imp.value });
+            input.value = '';
+            save();
+        }
+
+        function deleteItem(id) { brain = brain.filter(x => x.id !== id); save(); }
+
+        function render() {
+            const list = document.getElementById('brainList');
+            list.innerHTML = '';
+            brain.forEach(b => {
+                const div = document.createElement('div');
+                div.className = 'brain-item';
+                div.innerHTML = `
+                    <span class="brain-text">${b.text}</span>
+                    <div style="display:flex; align-items:center">
+                        <span class="importance imp-${b.importance}">${b.importance}</span>
+                        <span class="btn-delete" onclick="deleteItem(${b.id})">×</span>
+                    </div>`;
+                list.appendChild(div);
+            });
+        }
+        render();
+    </script>
+</body>
+</html>

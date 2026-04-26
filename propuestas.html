@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trácker Laboral - Magic Workspace</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/magic-core.css">
+    <script src="js/magic-shared.js"></script>
+    <style>
+        .kanban-col { min-height: 380px; display: flex; flex-direction: column; gap: 1rem; }
+        .kanban-list { display: flex; flex-direction: column; gap: 0.8rem; flex-grow: 1; }
+        .kanban-item { 
+            background: var(--bg-dark); padding: 1.2rem; border-radius: 18px; 
+            border: 1px solid var(--border); transition: all 0.2s; position: relative;
+        }
+        .kanban-item:hover { border-color: var(--primary); transform: translateY(-3px); }
+        .kanban-item h4 { margin: 0 0 0.3rem 0; font-size: 1.1rem; font-weight: 800; color: #fff; }
+        .kanban-item .company { font-size: 0.8rem; font-weight: 600; color: var(--primary); margin-bottom: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .kanban-item .summary { font-size: 0.8rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 1rem; white-space: pre-wrap;}
+        
+        .status-badge {
+            display: inline-block; padding: 0.2rem 0.6rem; border-radius: 8px; font-size: 0.7rem; font-weight: 800;
+            background: rgba(255,255,255,0.05); color: var(--text); border: 1px solid var(--border); margin-bottom: 0.8rem;
+        }
+
+        .item-actions { display: flex; gap: 0.4rem; border-top: 1px solid var(--border); padding-top: 0.8rem; flex-wrap: wrap; }
+        
+        .btn-action { 
+            background: var(--card); border: 1px solid var(--border); color: var(--text-muted);
+            padding: 0.3rem 0.6rem; border-radius: 8px; font-size: 0.7rem; cursor: pointer; font-weight: 800;
+            transition: all 0.2s; flex: 1; text-align: center;
+        }
+        .btn-action:hover { color: var(--text); border-color: var(--text); }
+        .btn-action.delete { flex: 0; background: rgba(239, 68, 68, 0.1); color: var(--danger); border-color: rgba(239, 68, 68, 0.2); }
+        .btn-action.delete:hover { background: var(--danger); color: white; }
+
+        .add-offer-form {
+            display: flex; flex-direction: column; gap: 0.8rem;
+            background: var(--bg-dark); border: 1px solid var(--border);
+            border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem;
+        }
+        
+        textarea.magic-input {
+            width: 100%; min-height: 100px;
+            background: #111; border: 1px solid #333; padding: 1rem;
+            border-radius: 12px; color: white; font-family: 'Inter', sans-serif; resize: vertical;
+        }
+        textarea.magic-input:focus { border-color: var(--primary); outline: none; }
+        
+        .form-actions { display: flex; gap: 0.6rem; align-items: center; }
+
+        .col-badge { 
+            font-size: 0.65rem; font-weight: 800; text-transform: uppercase; 
+            color: var(--text-muted); letter-spacing: 1px; 
+        }
+
+        .ai-processing { display: none; align-items: center; gap: 0.5rem; font-size: 0.8rem; color: var(--primary); font-weight: 600; }
+        .ai-processing.active { display: flex; }
+        .spinner {
+            width: 16px; height: 16px; border: 2px solid rgba(168, 85, 247, 0.3);
+            border-top-color: var(--primary); border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        .custom-select {
+            background: #111; color: white; border: 1px solid #333;
+            border-radius: 8px; padding: 0.3rem; font-size: 0.75rem; 
+            font-family: inherit; cursor: pointer; outline: none; flex: 2;
+        }
+        .custom-select:focus { border-color: var(--primary); }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <h1 class="gradient-heading">💼 Trácker Laboral</h1>
+            <p>Gestiona y analiza propuestas con IA.</p>
+        </header>
+
+        <div class="add-offer-form">
+            <h3 style="margin-top:0; font-size: 1.1rem;">✨ Nueva Propuesta</h3>
+            <textarea id="offerText" class="magic-input" placeholder="Pega aquí la descripción del trabajo, correo o datos de la propuesta..."></textarea>
+            
+            <div style="margin-top: 0.5rem; margin-bottom: 0.5rem;">
+                <label style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.3rem; display: block;">💰 Sueldo Posible / Pretendido (Opcional)</label>
+                <input type="text" id="offerSalary" style="width: 100%; box-sizing: border-box; background: #111; border: 1px solid #333; padding: 0.8rem; border-radius: 12px; color: white; font-family: 'Inter', sans-serif; outline: none; transition: border-color 0.2s;" placeholder="Ej: $2.500 USD o $1.500.000 ARS" onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='#333'">
+            </div>
+
+            <div class="form-actions">
+                <button class="magic-btn" onclick="analyzeOffer()" id="btnAnalyze">🌟 Analizar con IA</button>
+                <div class="ai-processing" id="aiProcessIndicator">
+                    <div class="spinner"></div> Analizando propuesta...
+                </div>
+            </div>
+        </div>
+
+        <div class="magic-grid">
+            <div class="magic-card kanban-col" id="col-activas">
+                <div>
+                    <h3>🚀 En Proceso</h3>
+                    <span class="col-badge">Contacto / Entrevistas</span>
+                </div>
+                <div id="list-activas" class="kanban-list"></div>
+            </div>
+
+            <div class="magic-card kanban-col" id="col-espera">
+                <div>
+                    <h3>⏳ En Espera</h3>
+                    <span class="col-badge">Esperando feedback</span>
+                </div>
+                <div id="list-espera" class="kanban-list"></div>
+            </div>
+
+            <div class="magic-card kanban-col" id="col-cerradas">
+                <div>
+                    <h3>🏁 Resolución</h3>
+                    <span class="col-badge">Aceptadas / Rechazadas</span>
+                </div>
+                <div id="list-cerradas" class="kanban-list"></div>
+            </div>
+        </div>
+
+        <!-- Edit Modal -->
+        <div id="editModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); z-index: 10000; justify-content: center; align-items: center; backdrop-filter: blur(5px);">
+            <div class="add-offer-form" style="width: 90%; max-width: 500px; margin: 0; box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
+                <h3 style="margin-top:0; font-size: 1.1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.8rem; margin-bottom: 1rem;">✏️ Editar Propuesta</h3>
+                <input type="hidden" id="editId">
+                
+                <label style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.3rem; display: block;">Puesto</label>
+                <input type="text" id="editTitle" class="magic-input" style="width: 100%; box-sizing: border-box; background: #111; border: 1px solid #333; padding: 0.8rem; border-radius: 12px; color: white; font-family: 'Inter', sans-serif; outline: none; margin-bottom: 1rem; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='#333'">
+                
+                <label style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.3rem; display: block;">Empresa</label>
+                <input type="text" id="editCompany" class="magic-input" style="width: 100%; box-sizing: border-box; background: #111; border: 1px solid #333; padding: 0.8rem; border-radius: 12px; color: white; font-family: 'Inter', sans-serif; outline: none; margin-bottom: 1rem; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='#333'">
+                
+                <label style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.3rem; display: block;">Sueldo Posible / Pretendido</label>
+                <input type="text" id="editSalary" class="magic-input" style="width: 100%; box-sizing: border-box; background: #111; border: 1px solid #333; padding: 0.8rem; border-radius: 12px; color: white; font-family: 'Inter', sans-serif; outline: none; margin-bottom: 1rem; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='#333'">
+                
+                <label style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.3rem; display: block;">Resumen / Requisitos</label>
+                <textarea id="editSummary" class="magic-input" style="width: 100%; box-sizing: border-box; background: #111; border: 1px solid #333; padding: 0.8rem; border-radius: 12px; color: white; font-family: 'Inter', sans-serif; outline: none; min-height: 120px; margin-bottom: 1rem; transition: border-color 0.2s; resize: vertical;" onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='#333'"></textarea>
+                
+                <div class="form-actions" style="justify-content: flex-end; gap: 0.8rem; border-top: 1px solid var(--border); padding-top: 1rem;">
+                    <button class="magic-btn" style="background: transparent; border: 1px solid #555; color: #ccc;" onclick="closeEditModal()">Cancelar</button>
+                    <button class="magic-btn" onclick="saveEdit()">Guardar Cambios</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const STATES = {
+            'contacto': { label: 'En Contacto', col: 'activas' },
+            'entrevista1': { label: '1° Entrevista', col: 'activas' },
+            'entrevista2': { label: '2° Entrevista', col: 'activas' },
+            'propuesta': { label: 'Propuesta Final', col: 'activas' },
+            'espera': { label: 'En Espera', col: 'espera' },
+            'aceptado': { label: '✅ Aceptado', col: 'cerradas' },
+            'rechazado': { label: '❌ Rechazado', col: 'cerradas' }
+        };
+
+        let proposals = MagicShared.load('job_proposals', []);
+
+        function save() {
+            MagicShared.save('job_proposals', proposals);
+            render();
+        }
+
+        async function analyzeOffer() {
+            const text = document.getElementById('offerText').value.trim();
+            const salaryInput = document.getElementById('offerSalary').value.trim();
+            if(!text) return alert("Pega una descripción primero.");
+
+            const btn = document.getElementById('btnAnalyze');
+            const indicator = document.getElementById('aiProcessIndicator');
+            
+            btn.style.display = 'none';
+            indicator.classList.add('active');
+
+            const prompt = `Analiza la siguiente descripción de una propuesta laboral. Extrae los siguientes datos en un formato conciso, sin preámbulos y listos para mostrar en una pequeña tarjeta:\n1. Puesto (ej. Desarrollador Frontend)\n2. Empresa (ej. Acme Corp, o 'Desconocida' si no hay)\n3. Requisitos Clave (máx 3 bullet points muy breves)\n4. Modalidad/Salario (si figuran)\n\nLa propuesta es la siguiente:\n\n${text}`;
+
+            try {
+                const aiResponse = await MagicAI.askGemini(prompt);
+                
+                // Parse the response loosely. We will just store the raw AI summary and try to extract Title and Company for the header.
+                // We'll tell AI to be concise so we can display it directly.
+                let assumedTitle = "Nueva Postulación";
+                let assumedCompany = "Empresa X";
+                
+                // Intentamos un parseo robusto para el título y empresa
+                const lines = aiResponse.split('\n');
+                lines.forEach(l => {
+                    const lLower = l.toLowerCase();
+                    if(lLower.includes('puesto:') || lLower.includes('1.')) {
+                        assumedTitle = l.replace(/.*puesto:/i, '').replace(/1\./, '').replace(/\*/g, '').trim();
+                    }
+                    if(lLower.includes('empresa:') || lLower.includes('2.')) {
+                        assumedCompany = l.replace(/.*empresa:/i, '').replace(/2\./, '').replace(/\*/g, '').trim();
+                    }
+                });
+
+                proposals.push({
+                    id: Date.now(),
+                    title: assumedTitle || 'Posición Laboral',
+                    company: assumedCompany || 'Empresa Desconocida',
+                    summary: aiResponse,
+                    expectedSalary: salaryInput,
+                    status: 'contacto',
+                    rawText: text
+                });
+
+                document.getElementById('offerText').value = '';
+                document.getElementById('offerSalary').value = '';
+                save();
+
+            } catch (error) {
+                alert("Hubo un error con la IA: " + error.message);
+            } finally {
+                btn.style.display = 'block';
+                indicator.classList.remove('active');
+            }
+        }
+
+        function changeStatus(id, newStatus) {
+            const p = proposals.find(x => x.id === id);
+            if(p && STATES[newStatus]) {
+                p.status = newStatus;
+                save();
+            }
+        }
+
+        function openEditModal(id) {
+            const p = proposals.find(x => x.id === id);
+            if(!p) return;
+            
+            document.getElementById('editId').value = p.id;
+            document.getElementById('editTitle').value = p.title || '';
+            document.getElementById('editCompany').value = p.company || '';
+            document.getElementById('editSalary').value = p.expectedSalary || '';
+            document.getElementById('editSummary').value = p.summary || '';
+            
+            document.getElementById('editModal').style.display = 'flex';
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
+        function saveEdit() {
+            const id = parseInt(document.getElementById('editId').value);
+            const p = proposals.find(x => x.id === id);
+            if(!p) return;
+            
+            p.title = document.getElementById('editTitle').value.trim();
+            p.company = document.getElementById('editCompany').value.trim();
+            p.expectedSalary = document.getElementById('editSalary').value.trim();
+            p.summary = document.getElementById('editSummary').value.trim();
+            
+            save();
+            closeEditModal();
+        }
+
+        function deleteProposal(id) {
+            if(!confirm("¿Eliminar esta propuesta?")) return;
+            proposals = proposals.filter(x => x.id !== id);
+            save();
+        }
+
+        function formatSalaryStr(str) {
+            if (!str) return '';
+            // Add dots to any number with 4 or more digits
+            let formatted = str.replace(/\b\d{4,}\b/g, match => Number(match).toLocaleString('es-AR'));
+            // If the user just typed numbers without a currency symbol, prepend a $
+            if (!formatted.includes('$') && !formatted.toLowerCase().includes('usd') && !formatted.toLowerCase().includes('eur')) {
+                formatted = '$' + formatted;
+            }
+            return formatted;
+        }
+
+        function render() {
+            const cols = {
+                'activas': document.getElementById('list-activas'),
+                'espera': document.getElementById('list-espera'),
+                'cerradas': document.getElementById('list-cerradas')
+            };
+
+            Object.values(cols).forEach(c => c.innerHTML = '');
+
+            // Ordenar por más recientes
+            const sorted = [...proposals].sort((a,b) => b.id - a.id);
+
+            sorted.forEach(p => {
+                const conf = STATES[p.status];
+                if(!conf) return;
+
+                const div = document.createElement('div');
+                div.className = 'kanban-item';
+                
+                // Generar options para el select
+                const options = Object.keys(STATES).map(key => {
+                    return `<option value="${key}" ${p.status === key ? 'selected' : ''}>${STATES[key].label}</option>`;
+                }).join('');
+
+                div.innerHTML = `
+                    <div class="status-badge">${conf.label}</div>
+                    <h4>${p.title.length > 35 ? p.title.substring(0,35)+'...' : p.title}</h4>
+                    <div class="company">${p.company.length > 30 ? p.company.substring(0,30)+'...' : p.company}</div>
+                    ${p.expectedSalary ? `<div style="font-size: 0.8rem; color: #10b981; font-weight: 800; margin-bottom: 0.8rem; background: rgba(16, 185, 129, 0.1); display: inline-block; padding: 0.2rem 0.6rem; border-radius: 6px; border: 1px solid rgba(16, 185, 129, 0.2);">💰 ${formatSalaryStr(p.expectedSalary)}</div>` : ''}
+                    <div class="summary">${p.summary}</div>
+                    
+                    <div class="item-actions">
+                        <select class="custom-select" onchange="changeStatus(${p.id}, this.value)">
+                            ${options}
+                        </select>
+                        <button class="btn-action edit" onclick="openEditModal(${p.id})" style="flex: 0; background: rgba(59, 130, 246, 0.1); color: #3b82f6; border-color: rgba(59, 130, 246, 0.2);">✏️</button>
+                        <button class="btn-action delete" onclick="deleteProposal(${p.id})">🗑️</button>
+                    </div>
+                `;
+
+                cols[conf.col].appendChild(div);
+            });
+
+            if(cols['activas'].children.length === 0) cols['activas'].innerHTML = '<p style="color:var(--text-muted);font-size:0.8rem">No hay procesos activos.</p>';
+            if(cols['espera'].children.length === 0) cols['espera'].innerHTML = '<p style="color:var(--text-muted);font-size:0.8rem">No hay nada en espera.</p>';
+            if(cols['cerradas'].children.length === 0) cols['cerradas'].innerHTML = '<p style="color:var(--text-muted);font-size:0.8rem">No hay resoluciones.</p>';
+        }
+
+        render();
+    </script>
+</body>
+</html>

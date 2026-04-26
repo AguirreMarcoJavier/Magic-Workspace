@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estación Meteorológica Satelital</title>
+    
+    <!-- core Assets -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/magic-core.css">
+    <script src="js/magic-shared.js"></script>
+    <style>
+        :root {
+            --accent-color: var(--primary);
+        }
+
+        
+
+        
+
+        
+
+        .temp-display {
+            font-size: 6rem;
+            font-weight: 800;
+            line-height: 1;
+            margin: 1rem 0;
+            text-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .temp-symbol {
+            font-size: 3rem;
+            color: #2dd4bf;
+            margin-top: 0.5rem;
+        }
+
+        .weather-desc {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            text-transform: capitalize;
+            margin-bottom: 2rem;
+        }
+
+        .weather-icon {
+            font-size: 5rem;
+            margin: 1rem 0;
+            filter: drop-shadow(0 0 15px rgba(255,255,255,0.2));
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .loading {
+            color: #38bdf8;
+            font-size: 1rem;
+            margin: 2rem 0;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+
+        .hidden { display: none !important; }
+
+    </style>
+</head>
+<body>
+
+    <div class="view-container sm" style="text-align: center;">
+        <a href="index.html" class="nav-link">← Volver al Dashboard</a>
+        <h1 class="gradient-heading">El Clima Hoy</h1>
+        
+        <div id="loader" class="loading">Solicitando ubicación al navegador...</div>
+        
+        <div id="weatherContent" class="hidden">
+            <div class="weather-icon" id="icon">⛅</div>
+            <div class="temp-display">
+                <span id="temp">--</span>
+                <span class="temp-symbol">°</span>
+            </div>
+            <div class="weather-desc" id="desc">Despejado</div>
+            <p style="font-size: 0.8rem; color: #64748b; margin-top: 2rem;">Lat: <span id="lat"></span> | Lon: <span id="lon"></span></p>
+        </div>
+
+        <div id="errorBox" class="hidden" style="color: #fca5a5; margin: 2rem 0; font-size:0.9rem;">
+            No pudimos obtener la ubicación. Asegúrate de darle permisos al navegador.
+            <br><br>
+            <button class="magic-btn" onclick="requestLocation()">Intentar Nuevamente</button>
+        </div>
+    </div>
+
+    <script>
+        // Mapeo simple de códigos WMO (Meteorological) a Emojis
+        function getWeatherIcon(code) {
+            if(code === 0) return { icon: "☀️", desc: "Despejado" };
+            if(code === 1 || code === 2) return { icon: "⛅", desc: "Parcialmente nublado" };
+            if(code === 3) return { icon: "☁️", desc: "Nublado" };
+            if(code === 45 || code === 48) return { icon: "🌫️", desc: "Neblina" };
+            if((code >= 51 && code <= 55) || (code >= 61 && code <= 65)) return { icon: "🌧️", desc: "Lluvia" };
+            if(code >= 71 && code <= 77) return { icon: "❄️", desc: "Nieve" };
+            if(code >= 80 && code <= 82) return { icon: "🌦️", desc: "Chubascos" };
+            if(code >= 95 && code <= 99) return { icon: "⛈️", desc: "Tormenta" };
+            return { icon: "🌡️", desc: "Variable" };
+        }
+
+        async function fetchWeather(lat, lon) {
+            document.getElementById('loader').innerText = "Consultando satélites...";
+            try {
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`;
+                const res = await fetch(url);
+                const data = await res.json();
+                
+                const weather = data.current_weather;
+                const visual = getWeatherIcon(weather.weathercode);
+                
+                document.getElementById('temp').innerText = Math.round(weather.temperature);
+                document.getElementById('icon').innerText = visual.icon;
+                document.getElementById('desc').innerText = visual.desc;
+                document.getElementById('lat').innerText = lat.toFixed(2);
+                document.getElementById('lon').innerText = lon.toFixed(2);
+                
+                document.getElementById('loader').classList.add('hidden');
+                document.getElementById('weatherContent').classList.remove('hidden');
+            } catch(e) {
+                document.getElementById('loader').classList.add('hidden');
+                document.getElementById('errorBox').classList.remove('hidden');
+                document.getElementById('errorBox').innerHTML = "Hubo un error contactando la API climática.";
+            }
+        }
+
+        function requestLocation() {
+            document.getElementById('loader').classList.remove('hidden');
+            document.getElementById('errorBox').classList.add('hidden');
+            document.getElementById('weatherContent').classList.add('hidden');
+
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        fetchWeather(position.coords.latitude, position.coords.longitude);
+                    },
+                    (error) => {
+                        document.getElementById('loader').classList.add('hidden');
+                        document.getElementById('errorBox').classList.remove('hidden');
+                    }
+                );
+            } else {
+                document.getElementById('loader').classList.add('hidden');
+                document.getElementById('errorBox').classList.remove('hidden');
+            }
+        }
+
+        // Auto start
+        requestLocation();
+    </script>
+</body>
+</html>

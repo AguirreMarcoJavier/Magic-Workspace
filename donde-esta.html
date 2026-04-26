@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donde Está Mi Cosa - Magic Workspace</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/magic-core.css">
+    <script src="js/magic-shared.js"></script>
+
+    <style>
+        .search-row { margin-bottom: 2rem; display: flex; gap: 1rem; align-items: center; }
+        .search-input { flex-grow: 1; padding: 1rem 1.5rem; border-radius: 18px; font-size: 1rem; }
+        .object-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .icon-box { width: 45px; height: 45px; background: var(--bg-dark); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; border: 1px solid var(--border); }
+        .category-tag { font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; padding: 4px 10px; border-radius: 8px; }
+        .tag-casa { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+        .tag-local { background: rgba(249, 115, 22, 0.1); color: #f97316; }
+        .item-name { font-size: 1.25rem; font-weight: 800; color: var(--text); margin-bottom: 0.4rem; display: block; }
+        .item-location { font-size: 0.95rem; color: var(--text-muted); line-height: 1.5; display: block; }
+        .action-btn { background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-muted); width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .action-btn:hover { color: var(--danger); border-color: var(--danger); }
+        .add-panel { grid-column: 1 / -1; margin-top: 2rem; }
+        .form-grid { display: grid; grid-template-columns: 2fr 2fr 1fr auto; gap: 1.2rem; align-items: flex-end; }
+        @media (max-width: 800px) { .form-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <header class="app-header">
+            <div style="display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:1.5rem">
+                <div>
+                    <h1 class="gradient-heading">Localizador</h1>
+                    <p>Cerebro auxiliar para tus pertenencias.</p>
+                </div>
+                <div style="display:flex; gap:0.5rem; background:var(--bg-dark); padding:0.4rem; border-radius:14px; border:1px solid var(--border)">
+                    <button id="f-todo" class="magic-btn secondary" style="padding:0.5rem 1rem" onclick="setFilter('todo')">Todo</button>
+                    <button id="f-casa" class="magic-btn secondary" style="padding:0.5rem 1rem" onclick="setFilter('casa')">🏠 Casa</button>
+                    <button id="f-local" class="magic-btn secondary" style="padding:0.5rem 1rem" onclick="setFilter('local')">🏢 Local</button>
+                </div>
+            </div>
+        </header>
+
+        <div class="search-row">
+            <input type="text" id="searchInput" class="search-input" placeholder="🔍 ¿Qué estás buscando?" oninput="renderItems()">
+        </div>
+
+        <div id="objectGrid" class="magic-grid"></div>
+
+        <div class="magic-card add-panel">
+            <h3>📍 Registrar nueva ubicación</h3>
+            <div class="form-grid">
+                <div class="input-group">
+                    <label>Objeto / Item</label>
+                    <input type="text" id="itemName" placeholder="Ej: Llaves del taller">
+                </div>
+                <div class="input-group">
+                    <label>Ubicación exacta</label>
+                    <input type="text" id="itemLocation" placeholder="Ej: Cajón gris, estante 3">
+                </div>
+                <div class="input-group">
+                    <label>Lugar</label>
+                    <select id="itemCategory">
+                        <option value="casa">🏠 Casa</option>
+                        <option value="local">🏢 Local</option>
+                    </select>
+                </div>
+                <button class="magic-btn" onclick="addItem()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let items = MagicShared.load('marco_objetos', []);
+        let currentFilter = 'todo';
+
+        function save() { MagicShared.save('marco_objetos', items); renderItems(); }
+
+        function addItem() {
+            const name = document.getElementById('itemName').value.trim();
+            const loc = document.getElementById('itemLocation').value.trim();
+            const cat = document.getElementById('itemCategory').value;
+            if(!name || !loc) return;
+            items.unshift({ id: Date.now(), name, location: loc, category: cat, date: new Date().toLocaleDateString('es-AR', { day: 'numeric', month: 'short' }) });
+            document.getElementById('itemName').value = '';
+            document.getElementById('itemLocation').value = '';
+            save();
+        }
+
+        function deleteItem(id) { if(confirm("¿Eliminar?")) { items = items.filter(i => i.id !== id); save(); } }
+
+        function setFilter(f) { 
+            currentFilter = f; 
+            document.querySelectorAll('[id^="f-"]').forEach(b => b.classList.add('secondary'));
+            document.getElementById('f-'+f).classList.remove('secondary');
+            renderItems(); 
+        }
+
+        function renderItems() {
+            const grid = document.getElementById('objectGrid');
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            grid.innerHTML = '';
+            const filtered = items.filter(i => (i.name.toLowerCase().includes(search) || i.location.toLowerCase().includes(search)) && (currentFilter === 'todo' || i.category === currentFilter));
+            
+            if(filtered.length === 0) {
+                grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:4rem; color:var(--text-muted)">No hay resultados.</div>`;
+                return;
+            }
+
+            filtered.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'magic-card object-card';
+                div.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start">
+                        <div class="icon-box">${item.category === 'casa' ? '🏠' : '🏢'}</div>
+                        <div class="category-tag tag-${item.category}">${item.category}</div>
+                    </div>
+                    <div>
+                        <span class="item-name">${item.name}</span>
+                        <span class="item-location">${item.location}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem; border-top:1px solid var(--border); padding-top:1rem">
+                        <span style="font-size:0.7rem; color:var(--text-muted)">${item.date}</span>
+                        <button class="action-btn" onclick="deleteItem(${item.id})">🗑️</button>
+                    </div>`;
+                grid.appendChild(div);
+            });
+        }
+        setFilter('todo');
+    </script>
+</body>
+</html>

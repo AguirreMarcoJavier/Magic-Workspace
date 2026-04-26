@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ta-Te-Ti vs IA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/magic-core.css">
+    <script src="js/magic-shared.js"></script>
+    <style>
+        .board { display: grid; grid-template-columns: repeat(3, 100px); gap: 12px; margin: 2rem auto; width: fit-content; }
+        .cell {
+            width: 100px; height: 100px; background: var(--bg-dark); border: 2px solid var(--border);
+            border-radius: 16px; display: flex; align-items: center; justify-content: center;
+            font-size: 3.5rem; font-weight: 800; cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: monospace;
+        }
+        .cell:hover { background: var(--card); border-color: var(--primary); transform: scale(1.05); }
+        .cell.x { color: var(--primary); }
+        .cell.o { color: var(--pink); }
+        .status { text-align: center; font-size: 1.2rem; font-weight: 700; margin-bottom: 1rem; color: var(--text); min-height: 28px; }
+        .controls { text-align: center; margin-top: 2rem; }
+    </style>
+</head>
+<body>
+    <div class="view-container sm">
+        <a href="juegos.html" class="nav-link">← Volver al Arcade</a>
+        <h1 style="text-align:center; font-size: 2.2rem; background: linear-gradient(to right, var(--primary), var(--pink)); background-clip: text; -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-top:1rem;">Ta-Te-Ti</h1>
+        <p style="text-align:center; color:var(--text-muted); font-size:0.9rem;">Tú juegas con <strong style="color:var(--primary); font-size:1.1rem;">X</strong>. Gemini juega con <strong style="color:var(--pink); font-size:1.1rem;">O</strong>.</p>
+        
+        <div class="status" id="statusMsg">Tu turno. Haz clic en una casilla.</div>
+        
+        <div class="board" id="board"></div>
+        
+        <div class="controls">
+            <button class="magic-btn secondary" onclick="resetGame()">Reiniciar Partida</button>
+        </div>
+    </div>
+
+    <script>
+        let board = ["", "", "", "", "", "", "", "", ""];
+        let humanPlayer = "X";
+        let aiPlayer = "O";
+        let isHumanTurn = true;
+        let gameActive = true;
+
+        const boardEl = document.getElementById('board');
+        const statusEl = document.getElementById('statusMsg');
+
+        function initBoard() {
+            boardEl.innerHTML = '';
+            for(let i=0; i<9; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.onclick = () => makeHumanMove(i);
+                boardEl.appendChild(cell);
+            }
+        }
+
+        function updateBoardUI() {
+            const cells = boardEl.children;
+            for(let i=0; i<9; i++) {
+                cells[i].innerText = board[i];
+                cells[i].className = 'cell ' + (board[i] === 'X' ? 'x' : (board[i] === 'O' ? 'o' : ''));
+            }
+        }
+
+        async function makeHumanMove(index) {
+            if(!isHumanTurn || !gameActive || board[index] !== "") return;
+            board[index] = humanPlayer;
+            updateBoardUI();
+            
+            if(checkWinner(humanPlayer)) { endGame("¡Has ganado! 🎉"); return; }
+            if(board.indexOf("") === -1) { endGame("¡Empate! 🤝"); return; }
+
+            isHumanTurn = false;
+            statusEl.innerText = "Gemini está pensando su jugada... 🧠";
+            
+            // Turno IA
+            await makeAIMove();
+        }
+
+        async function makeAIMove() {
+            if(!gameActive) return;
+            try {
+                // Representación del tablero para la IA
+                const boardVis = `${board[0]||'0'}|${board[1]||'1'}|${board[2]||'2'}\n-----\n${board[3]||'3'}|${board[4]||'4'}|${board[5]||'5'}\n-----\n${board[6]||'6'}|${board[7]||'7'}|${board[8]||'8'}`;
+                
+                const prompt = `Eres un experto invencible en el juego de Tic-Tac-Toe (Ta-Te-Ti). Juegas con 'O'. El humano juega con 'X'.
+Este es el tablero actual. Los números (0-8) representan las casillas vacías disponibles donde debes mover:
+${boardVis}
+
+Evalúa la posición analizando primero si tienes una jugada ganadora. Si no la tienes, analiza si necesitas bloquear al humano. De no ser el caso, elige el centro o una esquina.
+Regla estricta: RESPONDE ÚNICAMENTE CON EL ID NÚMERICO (Del 0 al 8) DE LA CASILLA DONDE VAS A JUGAR. NO COLOQUES PUNTO FINAL NI TEXTO EXTRA ACOMPAÑANDO AL NÚMERO. LA RESPUESTA DEBE SER SÓLO UN DÍGITO.`;
+
+                const aiResponse = await window.MagicAI.askGemini(prompt, []);
+                const moveMatch = aiResponse.match(/[0-8]/);
+                
+                if (moveMatch) {
+                    const moveIdx = parseInt(moveMatch[0]);
+                    if (board[moveIdx] === "") {
+                        board[moveIdx] = aiPlayer;
+                    } else {
+                        console.warn("IA seleccionó celda ocupada. Ejecutando fallback.");
+                        fallbackRandomMove();
+                    }
+                } else {
+                    console.warn("No se encontró ID en respuesta: ", aiResponse);
+                    fallbackRandomMove();
+                }
+
+            } catch(e) {
+                console.error("AI Error:", e);
+                fallbackRandomMove();
+            }
+
+            updateBoardUI();
+            
+            if(checkWinner(aiPlayer)) { endGame("Gemini ha ganado la partida. 💀"); return; }
+            if(board.indexOf("") === -1) { endGame("¡Empate! 🤝"); return; }
+
+            isHumanTurn = true;
+            statusEl.innerText = "Tu turno. Haz clic en una casilla.";
+        }
+
+        function fallbackRandomMove() {
+            const empty = [];
+            board.forEach((v, i) => { if(v==="") empty.push(i); });
+            if(empty.length > 0) {
+                const rand = empty[Math.floor(Math.random() * empty.length)];
+                board[rand] = aiPlayer;
+            }
+        }
+
+        function checkWinner(player) {
+            const wins = [
+                [0,1,2], [3,4,5], [6,7,8], // horizontales
+                [0,3,6], [1,4,7], [2,5,8], // verticales
+                [0,4,8], [2,4,6]           // diagonales
+            ];
+            return wins.some(w => board[w[0]] === player && board[w[1]] === player && board[w[2]] === player);
+        }
+
+        function endGame(msg) {
+            gameActive = false;
+            statusEl.innerText = msg;
+        }
+
+        function resetGame() {
+            board = ["", "", "", "", "", "", "", "", ""];
+            isHumanTurn = true;
+            gameActive = true;
+            statusEl.innerText = "Tu turno. Haz clic en una casilla.";
+            updateBoardUI();
+        }
+
+        initBoard();
+    </script>
+</body>
+</html>

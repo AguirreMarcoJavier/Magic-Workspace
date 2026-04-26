@@ -1,0 +1,395 @@
+{
+  "magic_strategic_projects": [],
+  "__meta_strategic_projects": {
+    "device": "PC",
+    "updatedAt": "2026-04-13T01:07:18.762Z"
+  },
+  "magic_strategic_tasks": [
+    {
+      "id": 1776084470790,
+      "type": "SECONDARY",
+      "text": "Hacer Flyers de los nuevos productos",
+      "completed": true
+    },
+    {
+      "id": 1776084523968,
+      "type": "SECONDARY",
+      "text": "Administrar categorías para organizar los flyers",
+      "completed": true
+    },
+    {
+      "id": 1776984691395,
+      "type": "CRITICAL",
+      "text": "Crear un plan para Inmodash",
+      "completed": false
+    },
+    {
+      "id": 1776985614196,
+      "type": "SECONDARY",
+      "text": "Hacer flyers de líneas de celular (Motorola - Samsung . Etc)",
+      "completed": false
+    }
+  ],
+  "__meta_strategic_tasks": {
+    "device": "PC",
+    "updatedAt": "2026-04-23T23:06:55.393Z"
+  },
+  "magic_finances_v2": [
+    {
+      "id": 1776103382376,
+      "type": "expense",
+      "desc": "Acondicionador + Otras cosas",
+      "amount": 28400,
+      "category": "Otros",
+      "date": "13 abr 15:03"
+    },
+    {
+      "id": 1776103238817,
+      "type": "income",
+      "desc": "Sueldo parte 2",
+      "amount": 140000,
+      "category": null,
+      "date": "13 abr 15:00"
+    },
+    {
+      "id": 1776103223643,
+      "type": "income",
+      "desc": "Sueldo",
+      "amount": 210000,
+      "category": null,
+      "date": "13 abr 15:00"
+    },
+    {
+      "id": 1776044624671,
+      "type": "expense",
+      "desc": "Impuestos Adobe",
+      "amount": 10346.53,
+      "category": "Otros",
+      "date": "12 abr 22:43"
+    },
+    {
+      "id": 1776044582160,
+      "type": "expense",
+      "desc": "Photoshop - Devolver",
+      "amount": 19964.99,
+      "category": "Otros",
+      "date": "12 abr 22:43"
+    },
+    {
+      "id": 1776044556926,
+      "type": "expense",
+      "desc": "Adobe - Premier (Devolver)",
+      "amount": 19964.95,
+      "category": "Otros",
+      "date": "12 abr 22:42"
+    },
+    {
+      "id": 1776044538623,
+      "type": "expense",
+      "desc": "Perc. IIBB",
+      "amount": 84.46,
+      "category": "Otros",
+      "date": "12 abr 22:42"
+    },
+    {
+      "id": 1776044515321,
+      "type": "expense",
+      "desc": "Percep. Ganancias (Devolver)",
+      "amount": 6033.48,
+      "category": "Otros",
+      "date": "12 abr 22:41"
+    },
+    {
+      "id": 1776044491776,
+      "type": "expense",
+      "desc": "IVA Serv. Digitales (Devolver)",
+      "amount": 4223.43,
+      "category": "Otros",
+      "date": "12 abr 22:41"
+    },
+    {
+      "id": 1776044460597,
+      "type": "expense",
+      "desc": "Zapatero",
+      "amount": 31500,
+      "category": "Otros",
+      "date": "12 abr 22:41"
+    },
+    {
+      "id": 1776044423779,
+      "type": "expense",
+      "desc": "Freepik",
+      "amount": 53428.02,
+      "category": "Servicios",
+      "date": "12 abr 22:40"
+    },
+    {
+      "id": 1776044338307,
+      "type": "expense",
+      "desc": "Uber",
+      "amount": 3590,
+      "category": "Transporte",
+      "date": "12 abr 22:38"
+    },
+    {
+      "id": 1776044324468,
+      "type": "expense",
+      "desc": "Uber",
+      "amount": 3690,
+      "category": "Transporte",
+      "date": "12 abr 22:38"
+    },
+    {
+      "id": 1776044307894,
+      "type": "expense",
+      "desc": "Depi",
+      "amount": 22000,
+      "category": "Otros",
+      "date": "12 abr 22:38"
+    },
+    {
+      "id": 1776044267286,
+      "type": "expense",
+      "desc": "Leche",
+      "amount": 1400,
+      "category": "Comida",
+      "date": "12 abr 22:37"
+    },
+    {
+      "id": 1776044238974,
+      "type": "expense",
+      "desc": "Spotify",
+      "amount": 4320.4,
+      "category": "Servicios",
+      "date": "12 abr 22:37"
+    },
+    {
+      "id": 1776044217037,
+      "type": "expense",
+      "desc": "Comida",
+      "amount": 20100,
+      "category": "Comida",
+      "date": "12 abr 22:36"
+    },
+    {
+      "id": 1776044200182,
+      "type": "expense",
+      "desc": "Google One",
+      "amount": 4536.4,
+      "category": "Servicios",
+      "date": "12 abr 22:36"
+    }
+  ],
+  "__meta_finances_v2": {
+    "device": "PC",
+    "updatedAt": "2026-04-13T18:03:03.501Z"
+  },
+  "magic_strategic_finance": {
+    "expected": 0,
+    "real": 210000,
+    "cash": 0,
+    "debts": [
+      {
+        "name": "Ualá - Préstamos",
+        "amount": 389390.12,
+        "priority": "Baja"
+      },
+      {
+        "name": "Ualá - Cuotificación",
+        "amount": 127493.98,
+        "priority": "Baja"
+      },
+      {
+        "name": "Ualá - Tarjeta de crédito",
+        "amount": 1348240.22,
+        "priority": "Baja"
+      },
+      {
+        "name": "Naranja X",
+        "amount": 200000,
+        "priority": "Baja"
+      },
+      {
+        "name": "Santander Rio",
+        "amount": 5134000,
+        "priority": "Baja"
+      }
+    ],
+    "upcoming": [
+      {
+        "name": "Mercado Pago",
+        "amount": 91442.57,
+        "dueDay": 15
+      },
+      {
+        "name": "Freepik",
+        "amount": 55000,
+        "dueDay": 8
+      },
+      {
+        "name": "Adobe - Premier",
+        "amount": 19000,
+        "dueDay": 11
+      },
+      {
+        "name": "Adobe - Photoshop",
+        "amount": 19000,
+        "dueDay": 8
+      },
+      {
+        "name": "Google One",
+        "amount": 4320.4,
+        "dueDay": 4
+      }
+    ]
+  },
+  "__meta_strategic_finance": {
+    "device": "PC",
+    "updatedAt": "2026-04-13T17:59:37.877Z"
+  },
+  "magic_comunicaciones_mensajes": [
+    {
+      "id": "msg_1776085143110_946",
+      "sender": "IT",
+      "text": "Hola",
+      "timestamp": "2026-04-13T12:59:03.110Z",
+      "status": "Resuelto"
+    },
+    {
+      "id": "msg_1776086135644_859",
+      "sender": "IT",
+      "text": "Hola",
+      "timestamp": "2026-04-13T13:15:35.645Z",
+      "status": "Pendiente"
+    },
+    {
+      "id": "msg_1776086310590_916",
+      "sender": "Ventas",
+      "text": "Hola",
+      "timestamp": "2026-04-13T13:18:30.590Z",
+      "status": "Pendiente"
+    },
+    {
+      "id": "msg_1776086320819_513",
+      "sender": "Ventas",
+      "text": "Test",
+      "timestamp": "2026-04-13T13:18:40.819Z",
+      "status": "Pendiente"
+    },
+    {
+      "id": "msg_1776088911565_25",
+      "sender": "Ventas",
+      "text": "Columbia Colors",
+      "timestamp": "2026-04-13T14:01:51.566Z",
+      "status": "Pendiente"
+    },
+    {
+      "id": "msg_1776088962205_997",
+      "sender": "Ventas",
+      "text": "2800 RPM | 5,5kg | Secado 3'",
+      "timestamp": "2026-04-13T14:02:42.205Z",
+      "status": "Pendiente"
+    }
+  ],
+  "__meta_comunicaciones_mensajes": {
+    "device": "Celular",
+    "updatedAt": "2026-04-13T14:02:43.563Z"
+  },
+  "magic_job_proposals": [
+    {
+      "id": 1776875315665,
+      "title": "Retail Media Manager",
+      "company": "BrainLabs",
+      "summary": "Aquí tienes la información solicitada:\n\n*   **Puesto:** Retail Media Manager\n*   **Empresa:** BrainLabs\n*   **Requisitos Clave:**\n    *   2-4 años de exp. en Retail Media (Amazon Ads)\n    *   Éxito demostrable en optimización de campañas (DSP, Sponsored Ads)\n    *   Fuertes habilidades de análisis de datos y presentación\n*   **Modalidad/Salario:**\n    *   Modalidad: Híbrida (3 días oficina, 1 mes remoto/año post 1er año), Full-Time\n    *   Salario: Esquema 50% USD / 50% ARS (neto, dólar oficial)",
+      "status": "espera",
+      "rawText": "Marco, gracias por la pronta respuesta. \n\nTe cuento...La posicion es para la empresa BrainLabs (https://www.brainlabs.com/). \nSe trata de una posicion en relacion de dependencia directa con ellos, y bajo modalidad hibrida (3 veces por semana oficina en Av. Dorrego 3550, Polo HIT, Buenos Aires.). \n\nBENEFICIOS.\n- Equipo: entregan equipos Apple (Mac) según el perfil.\n- Cobertura médica: OSDE 210 solo para el empleado. Si el candidato quiere mantener su propio plan, Brainlabs cubre solo el monto del aporte.\n- Desayuno y almuerzo gratis en oficina los días presenciales.\n- Días de estudio: 10 días al año (por ley).\n- Bonos descuentos: en comercios.\n- Remoto 1 mes al año: Después de cumplir 1 año de antigüedad, podés trabajar de forma remota durante 1 mes al año.\n- Esquema 50% USD / 50% ARS. La oferta se hace en pesos brutos. Luego del cálculo de descuentos, se divide el neto en 50% pesos y 50% dólares (convertido al dólar oficial Banco Nación, venta minorista del último día hábil del mes).\n\nTe comparto la descripcion de puesto para que conozcas un poco mas acerca del rol: https://conexion-hr.com/es/jobs/id-4366-retail-media-manager/\n\nMiralo tranquilo, y en caso que te interese avsiame y te cuento como seguimos! 🙂\nID 4366 – Retail Media Manager\nCategoría del trabajo: Manager\nTipo de trabajo Mix - Full Time\nUbicación del trabajo Buenos Aires\nAs a Retail Media Manager you’ll deliver best-in-class work for clients. You’ll apply your Retail Media knowledge and experience so that you have a positive impact on client deliverable and the wider team around you. You will help to define the campaign delivery plan, including objectives and ways in which work can be successful or optimised further. You will also generate and promote innovative new concepts to clients applying our test and learn approach and share successes across the practice by identifying and improving guidelines, playbooks and processes including opportunities to automate work.\n\nIn this role you will:\n● Use your practice knowledge you will be responsible for delivering highly successful, brilliant campaigns that outperform KPIs, to budget and on-time.\n● You’ll start to define campaign delivery plans and measurement targets.\n● You’ll effectively track and optimise campaigns.\n● You’ll work to manage the client relationship with support from the Associate Director.\n● You’ll develop and implement, as well as follow guidelines and processes contributing to ideas around automation or process improvement.\n● You’ll actively contribute to developing best-practice roadmap so that our Retail Media offering is continually developing.\n● You’ll mentor others across the practice helping to grow capability and knowledge, especially in Amazon DSP where you excel.\n\nWe’re looking for someone who:\n● Strong Retail Media delivery track record with 2-4 years of experience on Amazon Ads.\n● Passionate about your craft.\n● Demonstrable success in optimising Retail Media campaigns (including Sponsored Ads and DSP) and work through automation, processes and technology adoption/development.\n● A good understanding about how other channels work and optimise together.\n● A confident, dynamic, engaging and authentic communicator who cares about the quality of work and continuous learning.\n● Passionate about growing the knowledge of those around you.\n● Excellent presentation skills and strong data analysis and reporting skills.\n● Strong attention to detail, methodical and process orientated.\n\nAnd this is what success looks like in the role:\n● You will live our Culture Code every day.\n● You’re passionate about digital marketing and growing your career.\n●Achieving the goals set by your manager\n● Internal targets/metrics on technology adoption and process optimisation met.\n● You will hit our quality assurance metrics on all accounts you lead.\n● Client satisfaction targets being met (internal & external).\n● Learning certifications created and met across the practice.\n● Active involvement in mentoring less experienced colleagues.",
+      "expectedSalary": "2500000"
+    }
+  ],
+  "__meta_job_proposals": {
+    "device": "PC",
+    "updatedAt": "2026-04-24T17:33:00.782Z"
+  },
+  "magic_meta_catalog": [
+    {
+      "id": "smartv-serie-dorada-negro-32",
+      "title": "Televisión Smart Serie dorada 32\"",
+      "description": "Disfrutá de una experiencia visual de alta calidad con el televisor Serie Dorada 32SD16T. Con una pantalla LED de 32 pulgadas (74 cm x 7 cm x 44 cm), este equipo combina un diseño compacto con un rendimiento excepcional para tu hogar.",
+      "availability": "in stock",
+      "condition": "new",
+      "price": "325000",
+      "link": "https://wa.me/5491125538824?text=Hola!%20Vengo%20de%20la%20publicidad%20y%20quer%C3%ADa%20consultar%20por%3A%20Televisi%C3%B3n%20Smart%20Serie%20dorada%2032%22",
+      "image_link": "https://firebasestorage.googleapis.com/v0/b/gfh2-0-42d45.firebasestorage.app/o/products%2F1776803807136-203476.webp?alt=media&token=035e0547-4f78-4905-944b-b623480b8686",
+      "brand": "Serie Dorada",
+      "google_product_category": "",
+      "fb_product_category": "",
+      "item_group_id": "",
+      "quantity": "",
+      "color": "",
+      "size": "",
+      "material": "",
+      "sale_price": ""
+    },
+    {
+      "id": "balanza-silfab-bc314",
+      "title": "Balanza digital Silfab",
+      "description": "Balanza digital de cocina Deli Bamboo. Teclado táctil. Mide volumen de agua y leche. Función tara. Con tabla desmontable de madera. Bandeja desmontable de acero. Hasta 3 kg.",
+      "availability": "in stock",
+      "condition": "new",
+      "price": "25000",
+      "link": "https://wa.me/5491125538824?text=Hola!%20Vengo%20de%20la%20publicidad%20y%20quer%C3%ADa%20consultar%20por%3A%20Balanza%20digital%20Silfab",
+      "image_link": "https://firebasestorage.googleapis.com/v0/b/gfh2-0-42d45.firebasestorage.app/o/products%2F1771710551805-1.png?alt=media&token=2859af0c-ba9f-48cc-a120-c193b270c38f",
+      "brand": "Silfab",
+      "google_product_category": "",
+      "fb_product_category": "",
+      "item_group_id": "",
+      "quantity": "",
+      "color": "",
+      "size": "",
+      "material": "",
+      "sale_price": ""
+    },
+    {
+      "id": "balanza-luo-40kg",
+      "title": "Balanza Luo 40 Kg",
+      "description": "Herramienta de pesaje comercial de alta precisión, diseñada para negocios como almacenes",
+      "availability": "in stock",
+      "condition": "new",
+      "price": "66000",
+      "link": "https://wa.me/5491125538824?text=Hola!%20Vengo%20de%20la%20publicidad%20y%20quer%C3%ADa%20consultar%20por%3A%20Balanza%20Luo%2040%20Kg",
+      "image_link": "https://firebasestorage.googleapis.com/v0/b/gfh2-0-42d45.firebasestorage.app/o/products%2F1771710612003-3.png?alt=media&token=2982320c-773f-4399-b0f6-c89b35ffbc35",
+      "brand": "Luo",
+      "google_product_category": "",
+      "fb_product_category": "",
+      "item_group_id": "",
+      "quantity": "",
+      "color": "",
+      "size": "",
+      "material": "",
+      "sale_price": ""
+    },
+    {
+      "id": "balanza-luo-150kg",
+      "title": "Balanza Comercial Luo 150Kg",
+      "description": "Báscula de plataforma diseñada para el pesaje de mercaderías pesadas en entornos industriales y comerciales",
+      "availability": "in stock",
+      "condition": "new",
+      "price": "307999",
+      "link": "https://wa.me/5491125538824?text=Hola!%20Vengo%20de%20la%20publicidad%20y%20quer%C3%ADa%20consultar%20por%3A%20Balanza%20Comercial%20Luo%20150Kg",
+      "image_link": "https://firebasestorage.googleapis.com/v0/b/gfh2-0-42d45.firebasestorage.app/o/products%2F1771710639949-4.png?alt=media&token=91f8b0c7-e999-490e-b8b5-e5ecefc1c937",
+      "brand": "Luo",
+      "google_product_category": "",
+      "fb_product_category": "",
+      "item_group_id": "",
+      "quantity": "",
+      "color": "",
+      "size": "",
+      "material": "",
+      "sale_price": ""
+    }
+  ],
+  "__meta_meta_catalog": {
+    "device": "PC",
+    "updatedAt": "2026-04-26T00:55:14.510Z"
+  }
+}

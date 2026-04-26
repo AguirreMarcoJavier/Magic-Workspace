@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Revisión & Hábitos - Magic Workspace</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/magic-core.css">
+    <script src="js/magic-shared.js"></script>
+    <style>
+        .review-form { display: flex; flex-direction: column; gap: 1.2rem; }
+        .review-form textarea { height: 90px; resize: none; width: 100%; box-sizing: border-box; }
+        .save-indicator { font-size: 0.7rem; color: var(--success); opacity: 0; transition: opacity 0.4s; text-align: right; }
+        .save-indicator.show { opacity: 1; }
+
+        .habit-list { display: flex; flex-direction: column; gap: 1rem; }
+        .habit-row { 
+            display: flex; align-items: center; justify-content: space-between; 
+            padding: 1.2rem; background: var(--bg-dark); border-radius: 18px; border: 1px solid var(--border);
+            gap: 1rem;
+        }
+        .habit-left { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+        .habit-name { font-weight: 700; font-size: 0.95rem; }
+        .habit-delete { font-size: 0.65rem; color: var(--danger); cursor: pointer; font-weight: 800; letter-spacing: 0.5px; }
+        .habit-dots { display: flex; gap: 8px; }
+        .habit-dot { 
+            width: 20px; height: 20px; border-radius: 6px; border: 2px solid var(--primary); 
+            cursor: pointer; transition: all 0.2s; flex-shrink: 0;
+        }
+        .habit-dot.done { background: var(--primary); box-shadow: 0 0 10px var(--primary-muted); }
+        .day-labels { display: flex; gap: 8px; justify-content: flex-end; margin-bottom: 0.3rem; padding-right: 0; }
+        .day-label { width: 20px; text-align: center; font-size: 0.6rem; color: var(--text-muted); font-weight: 800; }
+
+        .add-habit-form {
+            display: none; flex-direction: column; gap: 0.8rem;
+            background: var(--bg-dark); border: 1px solid var(--border);
+            border-radius: 16px; padding: 1.2rem; margin-top: 0.5rem;
+        }
+        .add-habit-form.visible { display: flex; }
+        .form-actions { display: flex; gap: 0.6rem; }
+        .habit-limit-msg { font-size: 0.8rem; color: var(--text-muted); text-align: center; padding: 0.5rem; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <h1 class="gradient-heading">📝 Revisión & Hábitos</h1>
+            <p>Bitácora de mejora continua y tracking disciplinado.</p>
+        </header>
+
+        <div class="magic-grid">
+            <!-- REVISIÓN -->
+            <div class="magic-card">
+                <h3>Bitácora Semanal</h3>
+                <div class="review-form">
+                    <div class="input-group">
+                        <label>✅ ¿Qué funcionó bien?</label>
+                        <textarea id="reviewWorked" oninput="saveReview()" placeholder="Escibí qué funcionó esta semana..."></textarea>
+                    </div>
+                    <div class="input-group">
+                        <label>❌ ¿Qué falló?</label>
+                        <textarea id="reviewFailed" oninput="saveReview()" placeholder="¿Qué salió mal o qué evitaste?"></textarea>
+                    </div>
+                    <div class="input-group">
+                        <label>🔧 Ajustes próximos</label>
+                        <textarea id="reviewAdjust" oninput="saveReview()" placeholder="¿Qué cambiarías la próxima semana?"></textarea>
+                    </div>
+                    <span class="save-indicator" id="saveIndicator">✓ Guardado</span>
+                </div>
+            </div>
+
+            <!-- HÁBITOS -->
+            <div class="magic-card">
+                <h3>💎 Hábitos Semanales</h3>
+                <div class="day-labels">
+                    <span class="day-label">L</span>
+                    <span class="day-label">M</span>
+                    <span class="day-label">X</span>
+                    <span class="day-label">J</span>
+                    <span class="day-label">V</span>
+                </div>
+                <div id="habitsContainer" class="habit-list"></div>
+
+                <div id="habitLimitMsg" class="habit-limit-msg" style="display:none">
+                    Límite de 3 hábitos alcanzado.
+                </div>
+
+                <button class="magic-btn" id="btnAddHabit" onclick="toggleHabitForm()" style="margin-top:0.5rem">
+                    + Nuevo Hábito
+                </button>
+                <div class="add-habit-form" id="addHabitForm">
+                    <div class="input-group">
+                        <label>Nombre del hábito</label>
+                        <input type="text" id="habitName" placeholder="ej. Ejercicio, Lectura..."
+                               onkeydown="if(event.key==='Enter') confirmAddHabit()">
+                    </div>
+                    <div class="form-actions">
+                        <button class="magic-btn" onclick="confirmAddHabit()" style="flex:1">Agregar Hábito</button>
+                        <button class="magic-btn secondary" onclick="toggleHabitForm()">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let review = MagicShared.load('strategic_review', { worked: '', failed: '', adjust: '' });
+        let habits = MagicShared.load('strategic_habits', []);
+        let saveTimer = null;
+
+        function saveReview() {
+            review.worked = document.getElementById('reviewWorked').value;
+            review.failed = document.getElementById('reviewFailed').value;
+            review.adjust = document.getElementById('reviewAdjust').value;
+            // Debounce save: 800ms after last key
+            clearTimeout(saveTimer);
+            saveTimer = setTimeout(() => {
+                MagicShared.save('strategic_review', review);
+                const ind = document.getElementById('saveIndicator');
+                ind.classList.add('show');
+                setTimeout(() => ind.classList.remove('show'), 2000);
+            }, 800);
+        }
+
+        function saveHabits() {
+            MagicShared.save('strategic_habits', habits);
+            render();
+        }
+
+        function toggleHabitForm() {
+            const form = document.getElementById('addHabitForm');
+            form.classList.toggle('visible');
+            if (form.classList.contains('visible')) {
+                document.getElementById('habitName').value = '';
+                document.getElementById('habitName').focus();
+            }
+        }
+
+        function confirmAddHabit() {
+            const name = document.getElementById('habitName').value.trim();
+            if (!name) return;
+            if (habits.length >= 3) { alert('Máximo 3 hábitos.'); return; }
+            habits.push({ id: Date.now(), name, history: [false, false, false, false, false] });
+            toggleHabitForm();
+            saveHabits();
+        }
+
+        function toggleHabit(id, day) {
+            const h = habits.find(x => x.id === id);
+            if (h) { h.history[day] = !h.history[day]; saveHabits(); }
+        }
+
+        function deleteHabit(id) {
+            habits = habits.filter(x => x.id !== id);
+            saveHabits();
+        }
+
+        function render() {
+            // Review
+            document.getElementById('reviewWorked').value = review.worked || '';
+            document.getElementById('reviewFailed').value = review.failed || '';
+            document.getElementById('reviewAdjust').value = review.adjust || '';
+
+            // Habits
+            const cont = document.getElementById('habitsContainer');
+            cont.innerHTML = '';
+            habits.forEach(h => {
+                const div = document.createElement('div');
+                div.className = 'habit-row';
+                div.innerHTML = `
+                    <div class="habit-left">
+                        <span class="habit-name">${h.name}</span>
+                        <span class="habit-delete" onclick="deleteHabit(${h.id})">ELIMINAR</span>
+                    </div>
+                    <div class="habit-dots">
+                        ${[0,1,2,3,4].map(day => 
+                            `<div class="habit-dot ${h.history[day] ? 'done' : ''}" onclick="toggleHabit(${h.id}, ${day})"></div>`
+                        ).join('')}
+                    </div>
+                `;
+                cont.appendChild(div);
+            });
+
+            const btn = document.getElementById('btnAddHabit');
+            const msg = document.getElementById('habitLimitMsg');
+            if (habits.length >= 3) {
+                btn.style.display = 'none';
+                msg.style.display = 'block';
+            } else {
+                btn.style.display = 'block';
+                msg.style.display = 'none';
+            }
+        }
+        render();
+    </script>
+</body>
+</html>

@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meta Catalog Manager</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/magic-core.css">
+    <script src="js/magic-shared.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <style>
+        body {
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            box-sizing: border-box;
+            color: var(--text);
+        }
+
+        .layout-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 900px) {
+            .layout-grid { grid-template-columns: 1fr; }
+        }
+
+        .panel {
+            background: rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+
+        .panel h2 {
+            font-size: 1.2rem;
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            color: #e2e8f0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.4rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            box-sizing: border-box;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #60a5fa;
+            box-shadow: 0 0 15px rgba(96, 165, 250, 0.2);
+        }
+
+        .form-group select option {
+            background: #1e293b;
+            color: white;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 1rem;
+        }
+        .input-row > div { flex: 1; }
+
+        .image-dropzone {
+            width: 100%;
+            height: 250px;
+            border: 2px dashed rgba(255,255,255,0.2);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.3s;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .image-dropzone:hover {
+            border-color: #60a5fa;
+            background: rgba(96, 165, 250, 0.05);
+        }
+
+        .image-dropzone img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            position: absolute;
+            z-index: 1;
+        }
+
+        .drop-text { z-index: 2; text-align: center; font-size: 0.9rem; pointer-events: none;}
+
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            font-weight: 600;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            color: #60a5fa;
+            border-bottom-color: #60a5fa;
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .btn-magic {
+            background: linear-gradient(135deg, var(--primary), var(--pink));
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 15px rgba(236, 72, 153, 0.3);
+        }
+
+        .btn-magic:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(236, 72, 153, 0.5);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 0.8rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+        .btn-secondary:hover { background: rgba(255,255,255,0.2); }
+
+        .table-container {
+            margin-top: 3rem;
+            overflow-x: auto;
+            background: rgba(0,0,0,0.3);
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            color: #e2e8f0;
+        }
+
+        th {
+            background: rgba(0,0,0,0.4);
+            font-weight: 800;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.75rem;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 0.2rem;
+            transition: color 0.2s;
+        }
+        .action-btn:hover { color: white; }
+        .action-btn.delete:hover { color: #f87171; }
+
+        .flex-between { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;}
+
+        .auto-id-box {
+            display: flex;
+            gap: 0.5rem;
+            background: rgba(56, 189, 248, 0.1);
+            padding: 1rem;
+            border-radius: 12px;
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            margin-bottom: 1.5rem;
+        }
+    </style>
+</head>
+<body class="animated-bg">
+
+    <div class="view-container lg">
+        <a href="index.html" class="nav-link">← Volver al Dashboard</a>
+        <h1 class="gradient-heading">Meta Catalog Manager</h1>
+        <p style="text-align:center; color: var(--text-muted); margin-bottom: 2rem;">Gestiona y exporta tu catálogo de productos para Meta Ads.</p>
+
+        <div class="layout-grid">
+            <!-- Left Panel: Image Reference -->
+            <div class="panel">
+                <h2>📸 Visor de Referencia</h2>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">
+                    Pega (Ctrl+V) o haz clic para cargar una imagen de referencia (ej. especificaciones del TV).
+                </p>
+                <div class="image-dropzone" id="dropzone" tabindex="0">
+                    <div class="drop-text" id="dropText">
+                        <span style="font-size: 2rem;">📥</span><br>Pegar imagen aquí
+                    </div>
+                    <img id="previewImg" src="" style="display:none;" alt="Preview">
+                </div>
+                <button class="btn-secondary" style="width:100%; margin-top: 1rem;" onclick="document.getElementById('fileInput').click()">Cargar Archivo</button>
+                <input type="file" id="fileInput" accept="image/*" style="display:none;" onchange="handleFileUpload(event)">
+                <button class="btn-secondary" style="width:100%; margin-top: 0.5rem; border-color: #f87171; color: #fca5a5;" onclick="clearImage()">Limpiar Visor</button>
+                
+                <div id="ocrContainer" style="margin-top: 1.5rem; display: none;">
+                    <h3 style="font-size: 0.9rem; color: #93c5fd; margin-bottom: 0.5rem;">🧠 Texto Extraído (IA)</h3>
+                    <div id="ocrStatus" style="font-size: 0.8rem; color: #fbbf24; margin-bottom: 0.5rem;">Analizando imagen...</div>
+                    <textarea id="ocrResult" rows="5" style="width: 100%; padding: 0.8rem; border-radius: 8px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); color: #e2e8f0; font-size: 0.85rem;" placeholder="El texto detectado aparecerá aquí..."></textarea>
+                    <button class="btn-secondary" style="width:100%; margin-top: 0.5rem; font-size: 0.8rem;" onclick="copyOcrToDescription()">Copiar a Descripción</button>
+                </div>
+            </div>
+
+            <!-- Right Panel: Form -->
+            <div class="panel">
+                <h2>📝 Editor de Producto</h2>
+
+                <div class="auto-id-box">
+                    <div style="flex:1">
+                        <label style="font-size: 0.8rem; color: #93c5fd; font-weight:600;">Generador de ID (Categoría - Marca - Variante)</label>
+                        <div class="input-row" style="margin-top: 0.5rem;">
+                            <input type="text" id="genCat" placeholder="Ej: SmartTV" style="padding: 0.5rem; border-radius: 6px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); color:white; width: 100%;">
+                            <input type="text" id="genBrand" placeholder="Ej: Samsung" style="padding: 0.5rem; border-radius: 6px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); color:white; width: 100%;">
+                            <input type="text" id="genVar" placeholder="Ej: Negro-32" style="padding: 0.5rem; border-radius: 6px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); color:white; width: 100%;">
+                        </div>
+                    </div>
+                    <button class="btn-secondary" style="background:#38bdf8; color:black; border:none; margin-top: 1.5rem;" onclick="generateID()">Generar</button>
+                </div>
+
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="switchTab('req')">Obligatorios</button>
+                    <button class="tab-btn" onclick="switchTab('opt')">Opcionales</button>
+                </div>
+
+                <div id="tab-req" class="tab-content active">
+                    <div class="input-row">
+                        <div class="form-group">
+                            <label>ID del Artículo *</label>
+                            <input type="text" id="p_id" placeholder="identificador_unico">
+                        </div>
+                        <div class="form-group">
+                            <label>Marca (Brand) *</label>
+                            <input type="text" id="p_brand" placeholder="Nombre de la marca">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Título del Artículo *</label>
+                        <input type="text" id="p_title" placeholder="Ej: Remera Azul (Unisex)" maxlength="200">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Descripción *</label>
+                        <textarea id="p_description" rows="3" placeholder="Descripción detallada de las características..."></textarea>
+                    </div>
+
+                    <div class="input-row">
+                        <div class="form-group">
+                            <label>Disponibilidad *</label>
+                            <select id="p_availability">
+                                <option value="in stock">En Stock (in stock)</option>
+                                <option value="out of stock">Sin Stock (out of stock)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Condición *</label>
+                            <select id="p_condition">
+                                <option value="new">Nuevo (new)</option>
+                                <option value="used">Usado (used)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="input-row">
+                        <div class="form-group">
+                            <label>Precio (ARS) *</label>
+                            <input type="number" id="p_price" placeholder="Ej: 325000">
+                            <small style="color:var(--text-muted); font-size: 0.75rem;">Ingresa solo el número. Se exportará como Ej: 325000.00 ARS</small>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>URL de Compra (Link) *</label>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <input type="url" id="p_link" placeholder="https://tutienda.com/producto/123" style="flex: 1;">
+                            <button class="btn-secondary" style="background: #25D366; color: white; border: none; font-weight: 800; white-space: nowrap; padding: 0 1rem;" onclick="generateWaLink()" title="Generar link de WhatsApp automático">💬 Generar WA</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>URL de Imagen Principal *</label>
+                        <input type="url" id="p_image_link" placeholder="https://tutienda.com/images/123.jpg" oninput="previewProductImage()">
+                        <div id="productImagePreviewContainer" style="margin-top: 0.8rem; display: none; text-align: center; border: 1px dashed rgba(255,255,255,0.2); border-radius: 8px; padding: 0.5rem; background: rgba(0,0,0,0.3);">
+                            <img id="productImagePreview" src="" alt="Vista previa" style="max-width: 100%; max-height: 150px; object-fit: contain; border-radius: 4px;">
+                            <div id="productImageError" style="display: none; color: #f87171; font-size: 0.8rem; padding: 1rem;">❌ No se pudo cargar la imagen. Verifica que la URL sea directa (ej: terminada en .jpg o .png).</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-opt" class="tab-content">
+                    <div class="input-row">
+                        <div class="form-group">
+                            <label>Categoría Google</label>
+                            <input type="text" id="p_google_cat" placeholder="Ej: Apparel & Accessories > Clothing">
+                        </div>
+                        <div class="form-group">
+                            <label>Categoría Facebook</label>
+                            <input type="text" id="p_fb_cat" placeholder="Ej: Clothing & Accessories > Clothing">
+                        </div>
+                    </div>
+
+                    <div class="input-row">
+                        <div class="form-group">
+                            <label>Item Group ID (Variantes)</label>
+                            <input type="text" id="p_item_group" placeholder="ID para agrupar variantes">
+                        </div>
+                        <div class="form-group">
+                            <label>Cantidad en Venta</label>
+                            <input type="number" id="p_qty" placeholder="Ej: 100">
+                        </div>
+                    </div>
+
+                    <div class="input-row">
+                        <div class="form-group">
+                            <label>Color</label>
+                            <input type="text" id="p_color" placeholder="Ej: Negro">
+                        </div>
+                        <div class="form-group">
+                            <label>Tamaño/Talle</label>
+                            <input type="text" id="p_size" placeholder="Ej: 32 o XL">
+                        </div>
+                        <div class="form-group">
+                            <label>Material</label>
+                            <input type="text" id="p_material" placeholder="Ej: Algodón">
+                        </div>
+                    </div>
+
+                    <div class="input-row">
+                        <div class="form-group">
+                            <label>Precio de Oferta (ARS)</label>
+                            <input type="number" id="p_sale_price" placeholder="Ej: 290000">
+                        </div>
+                    </div>
+                </div>
+
+                <input type="hidden" id="editIndex" value="-1">
+                <button class="btn-magic" style="margin-top: 1rem;" onclick="saveProduct()" id="btnSave">Guardar Producto</button>
+                <button class="btn-secondary" style="width:100%; margin-top: 0.5rem; display:none;" onclick="cancelEdit()" id="btnCancel">Cancelar Edición</button>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <div class="flex-between" style="padding: 1.5rem; padding-bottom: 0;">
+                <h2>Catálogo Actual</h2>
+                <button class="btn-secondary" style="background:#10b981; border:none; color:black; font-weight:800;" onclick="exportCSV()">⬇️ Exportar CSV (Meta)</button>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Título</th>
+                        <th>Marca</th>
+                        <th>Precio</th>
+                        <th>Stock</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="catalogBody">
+                    <!-- Filas autogeneradas -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let catalog = [];
+
+        function init() {
+            catalog = MagicShared.load('meta_catalog', []);
+            renderTable();
+            setupPasteImage();
+        }
+
+        // Image Handling
+        function setupPasteImage() {
+            document.getElementById('dropzone').addEventListener('paste', function(e) {
+                const items = e.clipboardData.items;
+                for (let i = 0; i < items.length; i++) {
+                    if (items[i].type.indexOf('image') !== -1) {
+                        const blob = items[i].getAsFile();
+                        const url = URL.createObjectURL(blob);
+                        showPreview(url);
+                        e.preventDefault();
+                    }
+                }
+            });
+        }
+
+        function handleFileUpload(e) {
+            if (e.target.files && e.target.files[0]) {
+                const url = URL.createObjectURL(e.target.files[0]);
+                showPreview(url);
+            }
+        }
+
+        function showPreview(url) {
+            document.getElementById('previewImg').src = url;
+            document.getElementById('previewImg').style.display = 'block';
+            document.getElementById('dropText').style.display = 'none';
+            
+            // Iniciar OCR
+            extractTextFromImage(url);
+        }
+
+        async function extractTextFromImage(imageUrl) {
+            const container = document.getElementById('ocrContainer');
+            const status = document.getElementById('ocrStatus');
+            const resultBox = document.getElementById('ocrResult');
+            
+            container.style.display = 'block';
+            status.innerText = "⏳ Analizando imagen con IA (por favor espera)...";
+            status.style.color = "#fbbf24";
+            resultBox.value = "";
+
+            try {
+                const result = await Tesseract.recognize(
+                    imageUrl,
+                    'spa', // Español
+                    { logger: m => {
+                        if(m.status === 'recognizing text') {
+                            status.innerText = `⏳ Analizando... ${Math.round(m.progress * 100)}%`;
+                        }
+                    }}
+                );
+                
+                status.innerText = "✅ Análisis completado.";
+                status.style.color = "#10b981";
+                resultBox.value = result.data.text.trim() || "No se detectó texto claro en la imagen.";
+            } catch (error) {
+                console.error(error);
+                status.innerText = "❌ Error al analizar la imagen.";
+                status.style.color = "#f87171";
+            }
+        }
+
+        function copyOcrToDescription() {
+            const text = document.getElementById('ocrResult').value;
+            const desc = document.getElementById('p_description');
+            if(text) {
+                desc.value = desc.value ? desc.value + "\n\n" + text : text;
+                alert("Texto copiado a la Descripción del producto.");
+            }
+        }
+
+        function clearImage() {
+            document.getElementById('previewImg').src = '';
+            document.getElementById('previewImg').style.display = 'none';
+            document.getElementById('dropText').style.display = 'block';
+            document.getElementById('fileInput').value = '';
+            document.getElementById('ocrContainer').style.display = 'none';
+            document.getElementById('ocrResult').value = '';
+        }
+
+        // Tabs
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById('tab-' + tabId).classList.add('active');
+        }
+
+        // ID Generator
+        function generateID() {
+            const cat = document.getElementById('genCat').value.trim();
+            const brand = document.getElementById('genBrand').value.trim();
+            const variant = document.getElementById('genVar').value.trim();
+            
+            let parts = [];
+            if(cat) parts.push(cat);
+            if(brand) parts.push(brand);
+            if(variant) parts.push(variant);
+
+            if(parts.length > 0) {
+                // Convert to safe ID
+                const id = parts.join('-').toLowerCase()
+                    .replace(/[^a-z0-9-]/g, '') // remove special chars
+                    .replace(/-+/g, '-'); // remove double dashes
+                
+                document.getElementById('p_id').value = id;
+                if(!document.getElementById('p_brand').value) {
+                    document.getElementById('p_brand').value = brand;
+                }
+            } else {
+                alert("Completa al menos un campo del generador.");
+            }
+        }
+
+        function generateWaLink() {
+            const title = document.getElementById('p_title').value.trim();
+            if (!title) {
+                alert("Primero debes escribir el 'Título del Artículo' para poder generar el enlace de WhatsApp.");
+                return;
+            }
+            const phone = "5491125538824";
+            const baseText = "Hola! Vengo de la publicidad y quería consultar por: ";
+            
+            // encodeURIComponent asegura que los espacios sean %20 y maneja tildes/símbolos correctamente
+            const finalUrl = `https://wa.me/${phone}?text=${encodeURIComponent(baseText + title)}`;
+            
+            document.getElementById('p_link').value = finalUrl;
+        }
+
+        function previewProductImage() {
+            const url = document.getElementById('p_image_link').value.trim();
+            const container = document.getElementById('productImagePreviewContainer');
+            const img = document.getElementById('productImagePreview');
+            const errorText = document.getElementById('productImageError');
+
+            if (!url) {
+                container.style.display = 'none';
+                return;
+            }
+
+            container.style.display = 'block';
+            img.style.display = 'none';
+            errorText.style.display = 'none';
+
+            img.onload = function() {
+                img.style.display = 'inline-block';
+                errorText.style.display = 'none';
+            };
+
+            img.onerror = function() {
+                img.style.display = 'none';
+                errorText.style.display = 'block';
+            };
+
+            img.src = url;
+        }
+
+        // Product CRUD
+        function saveProduct() {
+            const product = {
+                id: document.getElementById('p_id').value.trim(),
+                title: document.getElementById('p_title').value.trim(),
+                description: document.getElementById('p_description').value.trim(),
+                availability: document.getElementById('p_availability').value,
+                condition: document.getElementById('p_condition').value,
+                price: document.getElementById('p_price').value.trim(),
+                link: document.getElementById('p_link').value.trim(),
+                image_link: document.getElementById('p_image_link').value.trim(),
+                brand: document.getElementById('p_brand').value.trim(),
+                
+                // optionals
+                google_product_category: document.getElementById('p_google_cat').value.trim(),
+                fb_product_category: document.getElementById('p_fb_cat').value.trim(),
+                item_group_id: document.getElementById('p_item_group').value.trim(),
+                quantity: document.getElementById('p_qty').value.trim(),
+                color: document.getElementById('p_color').value.trim(),
+                size: document.getElementById('p_size').value.trim(),
+                material: document.getElementById('p_material').value.trim(),
+                sale_price: document.getElementById('p_sale_price').value.trim()
+            };
+
+            // Basic validation
+            if(!product.id || !product.title || !product.price || !product.link || !product.image_link) {
+                alert("Por favor completa los campos obligatorios (ID, Título, Precio, Link, Imagen).");
+                switchTab('req');
+                return;
+            }
+
+            const editIndex = parseInt(document.getElementById('editIndex').value);
+            
+            if (editIndex >= 0) {
+                catalog[editIndex] = product;
+            } else {
+                // check duplicate ID
+                if(catalog.find(p => p.id === product.id)) {
+                    alert("Ya existe un producto con ese ID.");
+                    return;
+                }
+                catalog.push(product);
+            }
+
+            MagicShared.save('meta_catalog', catalog);
+            renderTable();
+            clearForm();
+        }
+
+        function renderTable() {
+            const body = document.getElementById('catalogBody');
+            body.innerHTML = '';
+            
+            catalog.forEach((p, idx) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${p.id}</td>
+                    <td style="font-weight:600;">${p.title}</td>
+                    <td>${p.brand}</td>
+                    <td style="color:#10b981;">${p.price} ARS</td>
+                    <td>${p.availability === 'in stock' ? '✅ En Stock' : '❌ Sin Stock'}</td>
+                    <td>
+                        <button class="action-btn" onclick="editProduct(${idx})" title="Editar">✏️</button>
+                        <button class="action-btn delete" onclick="deleteProduct(${idx})" title="Eliminar">🗑️</button>
+                    </td>
+                `;
+                body.appendChild(tr);
+            });
+        }
+
+        function editProduct(idx) {
+            const p = catalog[idx];
+            document.getElementById('editIndex').value = idx;
+            
+            document.getElementById('p_id').value = p.id;
+            document.getElementById('p_title').value = p.title;
+            document.getElementById('p_description').value = p.description;
+            document.getElementById('p_availability').value = p.availability;
+            document.getElementById('p_condition').value = p.condition;
+            document.getElementById('p_price').value = p.price;
+            document.getElementById('p_link').value = p.link;
+            document.getElementById('p_image_link').value = p.image_link;
+            document.getElementById('p_brand').value = p.brand;
+            
+            document.getElementById('p_google_cat').value = p.google_product_category || '';
+            document.getElementById('p_fb_cat').value = p.fb_product_category || '';
+            document.getElementById('p_item_group').value = p.item_group_id || '';
+            document.getElementById('p_qty').value = p.quantity || '';
+            document.getElementById('p_color').value = p.color || '';
+            document.getElementById('p_size').value = p.size || '';
+            document.getElementById('p_material').value = p.material || '';
+            document.getElementById('p_sale_price').value = p.sale_price || '';
+
+            document.getElementById('btnSave').innerText = "Actualizar Producto";
+            document.getElementById('btnCancel').style.display = "block";
+            window.scrollTo({top: 0, behavior: 'smooth'});
+            switchTab('req');
+            
+            // Cargar la vista previa de la imagen al editar
+            previewProductImage();
+        }
+
+        function deleteProduct(idx) {
+            if(confirm("¿Seguro que deseas eliminar este producto?")) {
+                catalog.splice(idx, 1);
+                MagicShared.save('meta_catalog', catalog);
+                renderTable();
+            }
+        }
+
+        function cancelEdit() {
+            clearForm();
+        }
+
+        function clearForm() {
+            document.getElementById('editIndex').value = "-1";
+            document.getElementById('btnSave').innerText = "Guardar Producto";
+            document.getElementById('btnCancel').style.display = "none";
+            
+            const inputs = ['p_id', 'p_title', 'p_description', 'p_price', 'p_link', 'p_image_link', 'p_brand',
+                            'p_google_cat', 'p_fb_cat', 'p_item_group', 'p_qty', 'p_color', 'p_size', 'p_material', 'p_sale_price',
+                            'genCat', 'genBrand', 'genVar'];
+            inputs.forEach(id => document.getElementById(id).value = '');
+            
+            document.getElementById('p_availability').value = "in stock";
+            document.getElementById('p_condition').value = "new";
+            
+            document.getElementById('productImagePreviewContainer').style.display = 'none';
+            document.getElementById('productImagePreview').src = '';
+        }
+
+        // CSV Export
+        function formatPrice(val) {
+            if(!val) return "";
+            const num = parseFloat(val);
+            if(isNaN(num)) return val;
+            return num.toFixed(2) + " ARS";
+        }
+
+        function escapeCSV(str) {
+            if(!str) return "";
+            str = str.toString().replace(/"/g, '""');
+            if(str.search(/("|,|\n)/g) >= 0) {
+                str = `"${str}"`;
+            }
+            return str;
+        }
+
+        function exportCSV() {
+            if(catalog.length === 0) {
+                alert("El catálogo está vacío.");
+                return;
+            }
+
+            const headers = [
+                "id", "title", "description", "availability", "condition", 
+                "price", "link", "image_link", "brand", 
+                "google_product_category", "fb_product_category", "quantity_to_sell_on_facebook",
+                "sale_price", "item_group_id", "color", "size", "material"
+            ];
+
+            let csvRows = [];
+            csvRows.push(headers.join(","));
+
+            catalog.forEach(p => {
+                const row = [
+                    escapeCSV(p.id),
+                    escapeCSV(p.title),
+                    escapeCSV(p.description),
+                    escapeCSV(p.availability),
+                    escapeCSV(p.condition),
+                    escapeCSV(formatPrice(p.price)),
+                    escapeCSV(p.link),
+                    escapeCSV(p.image_link),
+                    escapeCSV(p.brand),
+                    escapeCSV(p.google_product_category),
+                    escapeCSV(p.fb_product_category),
+                    escapeCSV(p.quantity),
+                    escapeCSV(formatPrice(p.sale_price)),
+                    escapeCSV(p.item_group_id),
+                    escapeCSV(p.color),
+                    escapeCSV(p.size),
+                    escapeCSV(p.material)
+                ];
+                csvRows.push(row.join(","));
+            });
+
+            const csvString = csvRows.join("\n");
+            // Se agrega el BOM (\uFEFF) para que Excel (y otros lectores) reconozcan los tildes y eñes (UTF-8) correctamente.
+            const blob = new Blob(["\uFEFF" + csvString], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `meta_catalog_${new Date().getTime()}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        init();
+    </script>
+</body>
+</html>

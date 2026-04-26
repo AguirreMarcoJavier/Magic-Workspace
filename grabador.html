@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grabador de Ideas por Voz</title>
+    
+    <!-- core Assets -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/magic-core.css">
+    <script src="js/magic-shared.js"></script>
+    <style>
+        :root {
+            --primary-accent: var(--primary);
+        }
+
+        body {
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .mic-btn {
+            
+            border: none;
+            color: white;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            font-size: 3rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 2rem auto;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(139, 92, 246, 0.5);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+
+        .mic-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .mic-btn.recording {
+            
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(236, 72, 153, 0.7); }
+            70% { box-shadow: 0 0 0 20px rgba(236, 72, 153, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(236, 72, 153, 0); }
+        }
+
+        .status {
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        #output {
+            background: var(--card);
+            border: 1px solid var(--border);
+            min-height: 150px;
+            border-radius: 12px;
+            padding: 1.5rem;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: var(--text-main);
+            text-align: left;
+            overflow-y: auto;
+            max-height: 300px;
+            margin-bottom: 1rem;
+        }
+
+        #output:empty::before {
+            content: "Tus notas conversadas aparecerán aquí...";
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .copy-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .copy-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body class="animated-bg">
+
+    <div class="view-container md">
+        <a href="index.html" class="nav-link">← Volver al Dashboard</a>
+        
+        <h1 class="gradient-heading">Grabador de Notas</h1>
+        <p class="status" id="statusText">Presiona el micrófono y empieza a hablar</p>
+        
+        <button class="mic-btn" id="micBtn">🎙️</button>
+        
+        <div id="output"></div>
+
+        <div style="display: flex; gap: 1rem; justify-content: center; width: 100%;">
+            <button class="copy-btn" id="copyBtn">Copiar Texto</button>
+            <button class="copy-btn" id="clearBtn" style="color: #fca5a5; border-color: rgba(239,68,68,0.3);">Vaciar Notas</button>
+        </div>
+    </div>
+
+    <script>
+        const micBtn = document.getElementById('micBtn');
+        const output = document.getElementById('output');
+        const statusText = document.getElementById('statusText');
+        const copyBtn = document.getElementById('copyBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        
+        let recognition = null;
+        let isRecording = false;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const saved = MagicShared.load('notes', '');
+            if(saved) {
+                output.innerHTML = saved;
+            }
+        });
+
+        function saveNotes() {
+            MagicShared.save('notes', output.innerHTML);
+        }
+
+        // Soporte base:
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = 'es-ES'; // Idioma Español
+
+            let previousNotes = '';
+
+            recognition.onstart = function() {
+                isRecording = true;
+                micBtn.classList.add('recording');
+                statusText.innerText = 'Escuchando... (presiona para detener)';
+                statusText.style.color = '#ec4899';
+                
+                // Guardar lo anterior
+                let currentContent = output.innerText.replace('Tus notas conversadas aparecerán aquí...', '').trim();
+                previousNotes = currentContent ? currentContent + ' ' : '';
+            };
+
+            recognition.onresult = function(event) {
+                let currentSessionFinal = '';
+                let interim = '';
+
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    if (event.results[i].isFinal) {
+                        currentSessionFinal += event.results[i][0].transcript + ' ';
+                    } else {
+                        interim += event.results[i][0].transcript;
+                    }
+                }
+                
+                output.innerHTML = "<span>" + previousNotes + currentSessionFinal + "</span>" +
+                                 "<span style='color:#a78bfa'> " + interim + "</span>";
+                
+                if (currentSessionFinal) saveNotes();
+            };
+
+            recognition.onerror = function(event) {
+                console.error("Error en reconocimiento: ", event.error);
+                statusText.innerText = 'Error de micrófono. Intenta de nuevo.';
+                statusText.style.color = '#ef4444';
+                micBtn.classList.remove('recording');
+                isRecording = false;
+            };
+
+            recognition.onend = function() {
+                if(isRecording) {
+                    // Si se corta automáticamente (ej: pausa larga), lo reiniciamos si sigue en estado "isRecording"
+                    recognition.start();
+                } else {
+                    micBtn.classList.remove('recording');
+                    statusText.innerText = 'Grabación pausada. Presiona para continuar.';
+                    statusText.style.color = 'var(--text-muted)';
+                }
+            };
+        } else {
+            statusText.innerText = "Tu navegador no soporta esta función. Te recomendamos Chrome.";
+            micBtn.disabled = true;
+            micBtn.style.opacity = '0.5';
+        }
+
+        micBtn.addEventListener('click', () => {
+            if (!recognition) return;
+
+            if (isRecording) {
+                isRecording = false;
+                recognition.stop();
+            } else {
+                output.innerHTML += " "; // Espacio visual
+                recognition.start();
+            }
+        });
+
+        // Copiar texto
+        copyBtn.addEventListener('click', () => {
+            const textToCopy = output.innerText.replace('Tus notas conversadas aparecerán aquí...', '').trim();
+            if(!textToCopy) return;
+
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                const prev = copyBtn.innerText;
+                copyBtn.innerText = '¡Copiado!';
+                setTimeout(() => { copyBtn.innerText = prev; }, 2000);
+            });
+        });
+
+        // Limpiar memoria
+        clearBtn.addEventListener('click', () => {
+            if(confirm("¿Estás seguro de borrar todas tus notas guardadas de forma permanente?")) {
+                output.innerHTML = '';
+                MagicShared.save('notes', '');
+            }
+        });
+    </script>
+</body>
+</html>
